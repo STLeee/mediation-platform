@@ -40,10 +40,6 @@ func LoadConfig(path string) (*Config, error) {
 	return cfg, nil
 }
 
-func LoadDefaultConfig() (*Config, error) {
-	return LoadConfig(DefaultConfigPath)
-}
-
 func GetConfig() *Config {
 	return cfg
 }

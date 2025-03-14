@@ -10,7 +10,7 @@ import (
 
 func init() {
 	// Load config
-	_, err := config.LoadDefaultConfig()
+	_, err := config.LoadConfig(config.DefaultConfigPath)
 	if err != nil {
 		panic(err)
 	}
