@@ -1,7 +1,7 @@
 APP_NAME=api-service
 
 run:
-	go run app/${APP_NAME}/main.go
+	$(MAKE) -C app/$(APP_NAME) run
 
 test:
-	go test -v ./...
+	$(MAKE) -C app/$(APP_NAME) test

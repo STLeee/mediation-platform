@@ -1,0 +1,6 @@
+server:
+  port: 8080
+
+service:
+  name: api-service
+  env: test
