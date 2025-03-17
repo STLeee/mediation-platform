@@ -19,6 +19,7 @@ func TestLoadAndGetConfig(t *testing.T) {
 	configData := `
 server:
   port: 9090
+  gin_mode: debug
 service:
   name: test-service
   env: test
@@ -31,13 +32,14 @@ service:
 	loadedCfg, err := LoadConfig(tempFile.Name())
 	assert.NoError(t, err)
 	assert.NotNil(t, loadedCfg)
-	assert.Equal(t, cfg.Server.Port, 9090)
-	assert.Equal(t, cfg.Service.Name, "test-service")
-	assert.Equal(t, cfg.Service.Environment, coreService.Testing)
+	assert.Equal(t, 9090, loadedCfg.Server.Port)
+	assert.Equal(t, "debug", loadedCfg.Server.GinMode)
+	assert.Equal(t, "test-service", loadedCfg.Service.Name)
+	assert.Equal(t, coreService.Testing, loadedCfg.Service.Environment)
 
 	// Ensure GetConfig returns the loaded config
 	gotCfg := GetConfig()
-	assert.Equal(t, gotCfg, loadedCfg)
+	assert.Equal(t, loadedCfg, gotCfg)
 }
 
 func TestLoadConfig_FileNotFound(t *testing.T) {

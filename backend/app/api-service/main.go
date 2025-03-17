@@ -11,10 +11,10 @@ import (
 
 func init() {
 	// Load config
-	_, err := config.LoadConfig(config.DefaultConfigPath)
-	if err != nil {
-		panic(err)
-	}
+	cfg := loadConfig(config.DefaultConfigPath)
+
+	// Set Gin mode
+	gin.SetMode(cfg.Server.GinMode)
 }
 
 func main() {
@@ -22,22 +22,26 @@ func main() {
 	cfg := config.GetConfig()
 
 	// Setup server
-	engine := setupRouters(cfg.Server.GinMode)
+	engine := gin.Default()
+	registerRouters(engine)
 
 	// Run server
 	engine.Run(fmt.Sprintf(":%d", cfg.Server.Port))
 }
 
-func setupRouters(ginMode string) *gin.Engine {
-	// Set Gin mode
-	gin.SetMode(ginMode)
+// Load config
+func loadConfig(path string) *config.Config {
+	cfg, err := config.LoadConfig(path)
+	if err != nil {
+		panic(err)
+	}
 
-	// Create Gin engine
-	engine := gin.Default()
+	return cfg
+}
 
+// Register routers
+func registerRouters(engine *gin.Engine) {
 	// Register health router
 	healthRouter := engine.Group("/health")
 	router.RegisterHealthRouter(healthRouter)
-
-	return engine
 }
