@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/STLeee/mediation-platform/backend/app/api-service/config"
+	"github.com/STLeee/mediation-platform/backend/app/api-service/router"
 )
 
 func init() {
@@ -17,13 +18,19 @@ func init() {
 }
 
 func main() {
+	// Get config
 	cfg := config.GetConfig()
 
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	r.Run(fmt.Sprintf(":%d", cfg.Server.Port))
+	// Register routers
+	engine := gin.Default()
+	registerRouters(engine)
+
+	// Run server
+	engine.Run(fmt.Sprintf(":%d", cfg.Server.Port))
+}
+
+func registerRouters(engine *gin.Engine) {
+	// Register health router
+	healthRouter := engine.Group("/health")
+	router.RegisterHealthRouter(healthRouter)
 }
