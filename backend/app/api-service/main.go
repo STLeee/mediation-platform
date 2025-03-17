@@ -21,16 +21,19 @@ func main() {
 	// Get config
 	cfg := config.GetConfig()
 
-	// Register routers
-	engine := gin.Default()
-	registerRouters(engine)
+	// Setup server
+	engine := setupRouters()
 
 	// Run server
 	engine.Run(fmt.Sprintf(":%d", cfg.Server.Port))
 }
 
-func registerRouters(engine *gin.Engine) {
+func setupRouters() *gin.Engine {
+	engine := gin.Default()
+
 	// Register health router
 	healthRouter := engine.Group("/health")
 	router.RegisterHealthRouter(healthRouter)
+
+	return engine
 }
