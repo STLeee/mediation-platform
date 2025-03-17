@@ -1,5 +1,6 @@
 server:
   port: 8080
+  gin_mode: debug
 
 service:
   name: api-service

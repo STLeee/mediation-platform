@@ -11,12 +11,13 @@ import (
 const DefaultConfigPath = "conf/app.conf.yaml"
 
 type ServerConfig struct {
-	Port int `yaml:"port" default:"8080"`
+	Port    int    `yaml:"port" default:"8080"`
+	GinMode string `yaml:"gin_mode" default:"release" validate:"oneof=debug release test"`
 }
 
 type ServiceConfig struct {
 	Name        string                  `yaml:"name" default:"api-service"`
-	Environment coreService.Environment `yaml:"env" default:"test"`
+	Environment coreService.Environment `yaml:"env" default:"test" validate:"oneof=test stag prod"`
 }
 
 type Config struct {

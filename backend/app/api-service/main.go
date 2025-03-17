@@ -22,13 +22,17 @@ func main() {
 	cfg := config.GetConfig()
 
 	// Setup server
-	engine := setupRouters()
+	engine := setupRouters(cfg.Server.GinMode)
 
 	// Run server
 	engine.Run(fmt.Sprintf(":%d", cfg.Server.Port))
 }
 
-func setupRouters() *gin.Engine {
+func setupRouters(ginMode string) *gin.Engine {
+	// Set Gin mode
+	gin.SetMode(ginMode)
+
+	// Create Gin engine
 	engine := gin.Default()
 
 	// Register health router
