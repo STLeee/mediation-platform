@@ -9,6 +9,7 @@ import (
 
 	"github.com/STLeee/mediation-platform/backend/app/api-service/config"
 	"github.com/STLeee/mediation-platform/backend/app/api-service/docs"
+	"github.com/STLeee/mediation-platform/backend/app/api-service/middleware"
 	"github.com/STLeee/mediation-platform/backend/app/api-service/router"
 	coreService "github.com/STLeee/mediation-platform/backend/core/service"
 )
@@ -57,6 +58,9 @@ func loadConfig(path string) *config.Config {
 
 // Register routers
 func registerRouters(routerGroup *gin.RouterGroup) {
+	// Middleware
+	routerGroup.Use(middleware.Cors())
+
 	// Register health router
 	healthRouterGroup := routerGroup.Group("/health")
 	router.RegisterHealthRouter(healthRouterGroup)
