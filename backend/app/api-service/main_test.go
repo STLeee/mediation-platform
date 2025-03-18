@@ -23,7 +23,7 @@ func TestApp(t *testing.T) {
 	go main()
 
 	// Test health check
-	response, err := http.Get("http://localhost:8080/health/liveness")
+	response, err := http.Get("http://localhost:8080/api/health/liveness")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 }
@@ -54,7 +54,7 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 }
 
 func TestSetupRouters(t *testing.T) {
-	utils.TestRoutersRegister(t, registerRouters, []string{
+	utils.TestRouterRegister(t, registerRouters, []string{
 		"/health/liveness",
 		"/health/readiness",
 	})

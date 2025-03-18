@@ -1,0 +1,37 @@
+definitions:
+  model.MessageResponse:
+    properties:
+      message:
+        example: ok
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /health/liveness:
+    get:
+      description: Liveness check
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.MessageResponse'
+      summary: Liveness check
+      tags:
+      - health
+  /health/readiness:
+    get:
+      description: Readiness check
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.MessageResponse'
+      summary: Readiness check
+      tags:
+      - health
+swagger: "2.0"

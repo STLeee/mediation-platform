@@ -1,6 +1,7 @@
 TESTING_COVERAGE_FILE=testing_coverage.out
 
 run:
+	swag init
 	go run main.go
 
 test:

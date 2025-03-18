@@ -14,12 +14,22 @@ func NewHealthController() *HealthController {
 	return &HealthController{}
 }
 
-// Liveness is a handler for liveness check
+// @Summary Liveness check
+// @Description Liveness check
+// @Tags health
+// @Router /health/liveness [get]
+// @Produce json
+// @Success 200 {object} model.MessageResponse
 func (hc *HealthController) Liveness(c *gin.Context) {
 	hc.ResponseOK(c)
 }
 
-// Readiness is a handler for readiness check
+// @Summary Readiness check
+// @Description Readiness check
+// @Tags health
+// @Router /health/readiness [get]
+// @Produce json
+// @Success 200 {object} model.MessageResponse
 func (hc *HealthController) Readiness(c *gin.Context) {
 	hc.ResponseOK(c)
 }

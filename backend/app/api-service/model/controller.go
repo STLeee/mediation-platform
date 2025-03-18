@@ -1,8 +1,8 @@
-package controller
+package model
 
 // MessageResponse is a response for message
 type MessageResponse struct {
-	Message string `json:"message"`
+	Message string `json:"message" example:"ok"`
 }
 
 // NewMessageResponse creates a new MessageResponse

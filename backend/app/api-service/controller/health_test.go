@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	controllerModel "github.com/STLeee/mediation-platform/backend/app/api-service/model/controller"
+	"github.com/STLeee/mediation-platform/backend/app/api-service/model"
 	"github.com/STLeee/mediation-platform/backend/core/utils"
 )
 
@@ -18,7 +18,7 @@ func TestHealthControllerLiveness(t *testing.T) {
 	httpRecorder := utils.RegisterAndRecordHttpRequest(routerRegisterFunc, "GET", "/liveness", nil)
 
 	assert.Equal(t, 200, httpRecorder.Code)
-	expectedResponse := controllerModel.NewMessageResponse("ok")
+	expectedResponse := model.NewMessageResponse("ok")
 	assert.Equal(t, utils.ToJSONString(expectedResponse), httpRecorder.Body.String())
 }
 func TestHealthControllerReadiness(t *testing.T) {
@@ -29,6 +29,6 @@ func TestHealthControllerReadiness(t *testing.T) {
 	httpRecorder := utils.RegisterAndRecordHttpRequest(routerRegisterFunc, "GET", "/readiness", nil)
 
 	assert.Equal(t, 200, httpRecorder.Code)
-	expectedResponse := controllerModel.NewMessageResponse("ok")
+	expectedResponse := model.NewMessageResponse("ok")
 	assert.Equal(t, utils.ToJSONString(expectedResponse), httpRecorder.Body.String())
 }

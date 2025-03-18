@@ -4,9 +4,13 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/STLeee/mediation-platform/backend/app/api-service/config"
+	"github.com/STLeee/mediation-platform/backend/app/api-service/docs"
 	"github.com/STLeee/mediation-platform/backend/app/api-service/router"
+	coreService "github.com/STLeee/mediation-platform/backend/core/service"
 )
 
 func init() {
@@ -23,10 +27,22 @@ func main() {
 
 	// Setup server
 	engine := gin.Default()
-	registerRouters(engine)
+	apiRouterGroup := engine.Group("/api")
+	registerRouters(apiRouterGroup)
+
+	// Swagger
+	if cfg.Service.Environment == coreService.Testing {
+		docs.SwaggerInfo.Title = "Mediation Platform API Service"
+		docs.SwaggerInfo.Description = "API Service for Mediation Platform"
+		docs.SwaggerInfo.Version = "1.0"
+		docs.SwaggerInfo.Host = fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+		docs.SwaggerInfo.BasePath = "/api"
+		docs.SwaggerInfo.Schemes = []string{"http", "https"}
+		engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	// Run server
-	engine.Run(fmt.Sprintf(":%d", cfg.Server.Port))
+	engine.Run(fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port))
 }
 
 // Load config
@@ -40,8 +56,8 @@ func loadConfig(path string) *config.Config {
 }
 
 // Register routers
-func registerRouters(engine *gin.Engine) {
+func registerRouters(routerGroup *gin.RouterGroup) {
 	// Register health router
-	healthRouter := engine.Group("/health")
-	router.RegisterHealthRouter(healthRouter)
+	healthRouterGroup := routerGroup.Group("/health")
+	router.RegisterHealthRouter(healthRouterGroup)
 }

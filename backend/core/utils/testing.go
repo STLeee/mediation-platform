@@ -9,20 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestRoutersRegister tests the router registration
-func TestRoutersRegister(t *testing.T, routerRegisterFunc func(*gin.Engine), exceptedPaths []string) {
-	engine := gin.Default()
-	routerRegisterFunc(engine)
-
-	routes := engine.Routes()
-	var paths []string
-	for _, route := range routes {
-		paths = append(paths, route.Path)
-	}
-
-	assert.ElementsMatch(t, exceptedPaths, paths)
-}
-
 // TestRouterRegister tests the router registration
 func TestRouterRegister(t *testing.T, routerRegisterFunc func(*gin.RouterGroup), exceptedPaths []string) {
 	engine := gin.Default()

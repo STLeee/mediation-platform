@@ -8,18 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTestRoutersRegister(t *testing.T) {
-	routersRegisterFunc := func(engine *gin.Engine) {
-		router := engine.Group("/test")
-		router.GET("/a", func(ctx *gin.Context) {})
-		router.GET("/b", func(ctx *gin.Context) {})
-	}
-	TestRoutersRegister(t, routersRegisterFunc, []string{
-		"/test/a",
-		"/test/b",
-	})
-}
-
 func TestTestRouterRegister(t *testing.T) {
 	routerRegisterFunc := func(router *gin.RouterGroup) {
 		router.GET("/a", func(ctx *gin.Context) {})
