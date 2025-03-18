@@ -5,6 +5,7 @@ import (
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
+	"github.com/STLeee/mediation-platform/backend/core/model"
 	"google.golang.org/api/option"
 )
 
@@ -62,4 +63,21 @@ func (firebaseAuth *FirebaseAuth) AuthenticateByToken(ctx context.Context, token
 		return "", NewFirebaseAuthError(err)
 	}
 	return verifiedToken.UID, nil
+}
+
+// GetUserInfo gets the user info by uid
+func (firebaseAuth *FirebaseAuth) GetUserInfo(ctx context.Context, uid string) (*model.UserInfo, error) {
+	userRecord, err := firebaseAuth.authClient.GetUser(ctx, uid)
+	if err != nil {
+		return nil, NewFirebaseAuthError(err)
+	}
+	return &model.UserInfo{
+		UID:           userRecord.UID,
+		DisplayName:   userRecord.DisplayName,
+		Email:         userRecord.Email,
+		PhoneNumber:   userRecord.PhoneNumber,
+		PhotoURL:      userRecord.PhotoURL,
+		Disabled:      userRecord.Disabled,
+		EmailVerified: userRecord.EmailVerified,
+	}, nil
 }
