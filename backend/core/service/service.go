@@ -1,9 +1,10 @@
 package service
 
-type Environment string
+// ServiceEnvironment is the environment of the service
+type ServiceEnvironment string
 
 const (
-	Testing    Environment = "test"
-	Staging    Environment = "stag"
-	Production Environment = "prod"
+	Testing    ServiceEnvironment = "test"
+	Staging    ServiceEnvironment = "stag"
+	Production ServiceEnvironment = "prod"
 )
