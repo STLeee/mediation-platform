@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestRoutersRegister tests the router registration
 func TestRoutersRegister(t *testing.T, routerRegisterFunc func(*gin.Engine), exceptedPaths []string) {
 	engine := gin.Default()
 	routerRegisterFunc(engine)
@@ -22,6 +23,7 @@ func TestRoutersRegister(t *testing.T, routerRegisterFunc func(*gin.Engine), exc
 	assert.ElementsMatch(t, exceptedPaths, paths)
 }
 
+// TestRouterRegister tests the router registration
 func TestRouterRegister(t *testing.T, routerRegisterFunc func(*gin.RouterGroup), exceptedPaths []string) {
 	engine := gin.Default()
 	routerRegisterFunc(engine.Group("/"))
@@ -35,6 +37,7 @@ func TestRouterRegister(t *testing.T, routerRegisterFunc func(*gin.RouterGroup),
 	assert.ElementsMatch(t, exceptedPaths, paths)
 }
 
+// RegisterAndRecordHttpRequest registers the router and records the http request
 func RegisterAndRecordHttpRequest(routerRegisterFunc func(*gin.RouterGroup), method string, path string, body io.Reader) *httptest.ResponseRecorder {
 	engine := gin.Default()
 	routerRegisterFunc(engine.Group("/"))
@@ -42,6 +45,7 @@ func RegisterAndRecordHttpRequest(routerRegisterFunc func(*gin.RouterGroup), met
 	return RecordHttpRequest(engine, method, path, body)
 }
 
+// RecordHttpRequest records the http request
 func RecordHttpRequest(engine *gin.Engine, method string, path string, body io.Reader) *httptest.ResponseRecorder {
 	httpRecorder := httptest.NewRecorder()
 	req := httptest.NewRequest(method, path, body)

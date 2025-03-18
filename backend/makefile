@@ -5,3 +5,6 @@ run:
 
 test:
 	$(MAKE) -C app/$(APP_NAME) test
+
+test-report:
+	$(MAKE) -C app/$(APP_NAME) test-report
