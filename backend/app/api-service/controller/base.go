@@ -11,5 +11,5 @@ type BaseController struct{}
 
 // ResponseOK is a response for ok
 func (bc *BaseController) ResponseOK(c *gin.Context) {
-	c.JSON(200, model.NewMessageResponse("ok"))
+	c.JSON(200, model.MessageResponse{Message: "ok"})
 }
