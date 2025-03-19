@@ -1,10 +1,26 @@
 APP_NAME=api-service
 
-run:
+setup-local-infra:
+	docker-compose -f docker-compose.infra.yml up
+
+stop-local-infra:
+	docker-compose -f docker-compose.infra.yml down
+
+run-app:
 	$(MAKE) -C app/$(APP_NAME) run
 
-test:
+test-app:
 	$(MAKE) -C app/$(APP_NAME) test
 
-test-report:
+test-app-report:
 	$(MAKE) -C app/$(APP_NAME) test-report
+
+test-core:
+	$(MAKE) -C core test
+
+test-core-report:
+	$(MAKE) -C core test-report
+
+test:
+	$(MAKE) test-core
+	$(MAKE) test-app

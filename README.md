@@ -18,5 +18,5 @@ Reference:
     ```
 3. Run Emulator
     ```bash
-    make run-firebase-emulators
+    make setup-firebase-emulators
     ```
