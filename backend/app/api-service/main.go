@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +12,7 @@ import (
 	"github.com/STLeee/mediation-platform/backend/app/api-service/docs"
 	"github.com/STLeee/mediation-platform/backend/app/api-service/middleware"
 	"github.com/STLeee/mediation-platform/backend/app/api-service/router"
+	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
 	coreService "github.com/STLeee/mediation-platform/backend/core/service"
 )
 
@@ -22,14 +24,19 @@ func init() {
 	gin.SetMode(cfg.Server.GinMode)
 }
 
+// @securityDefinitions.apikey TokenAuth
+// @in header
+// @name Authorization
 func main() {
 	// Get config
 	cfg := config.GetConfig()
 
+	// Init auth service
+	authService := initAuthService(cfg)
+
 	// Setup server
 	engine := gin.Default()
-	apiRouterGroup := engine.Group("/api")
-	registerRouters(apiRouterGroup)
+	registerAPIRouters(engine, authService)
 
 	// Swagger
 	if cfg.Service.Environment == coreService.Testing {
@@ -56,12 +63,34 @@ func loadConfig(path string) *config.Config {
 	return cfg
 }
 
-// Register routers
-func registerRouters(routerGroup *gin.RouterGroup) {
-	// Middleware
-	routerGroup.Use(middleware.Cors())
+// Init auth service
+func initAuthService(cfg *config.Config) coreAuth.BaseAuthService {
+	authService, err := coreAuth.NewAuthService(context.Background(), &cfg.AuthService)
+	if err != nil {
+		panic(err)
+	}
+
+	return authService
+}
+
+// Register API routers
+func registerAPIRouters(engine *gin.Engine, authService coreAuth.BaseAuthService) {
+	// Register middleware
+	engine.Use(middleware.CorsHandler())
+	engine.Use(middleware.ErrorHandler())
+
+	// Register API routers
+	apiRouterGroup := engine.Group("/api")
 
 	// Register health router
-	healthRouterGroup := routerGroup.Group("/health")
+	healthRouterGroup := apiRouterGroup.Group("/health")
 	router.RegisterHealthRouter(healthRouterGroup)
+
+	// Register v1 router
+	v1RouterGroup := apiRouterGroup.Group("/v1")
+
+	// Register v1 user router
+	userRouterGroup := v1RouterGroup.Group("/user")
+	userRouterGroup.Use(middleware.TokenAuthHandler(authService))
+	router.RegisterV1UserRouter(userRouterGroup)
 }

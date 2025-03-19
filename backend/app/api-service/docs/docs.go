@@ -54,9 +54,68 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/user/:user_id": {
+            "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
+                "description": "Get user info",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GetUserResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "model.GetUserResponse": {
+            "type": "object",
+            "properties": {
+                "display_name": {
+                    "type": "string",
+                    "example": "Scott Lin"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "example@mediation-platform.com"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "+886987654321"
+                },
+                "photo_url": {
+                    "type": "string",
+                    "example": "https://example.com/photo.jpg"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "1234567890"
+                }
+            }
+        },
         "model.MessageResponse": {
             "type": "object",
             "properties": {
@@ -65,6 +124,13 @@ const docTemplate = `{
                     "example": "ok"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "TokenAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

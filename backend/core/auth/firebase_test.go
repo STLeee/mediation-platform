@@ -16,7 +16,7 @@ import (
 var firebaseAuth *FirebaseAuth
 var testUserList = []*model.UserInfo{
 	{
-		UID:           "LRgwDJoRP7BCYJBNmNrNL4rxhvgR",
+		FirebaseUID:   "LRgwDJoRP7BCYJBNmNrNL4rxhvgR",
 		DisplayName:   "TestingUser1",
 		Email:         "testing1@mediation-platform.com",
 		PhoneNumber:   "",
@@ -25,7 +25,7 @@ var testUserList = []*model.UserInfo{
 		EmailVerified: false,
 	},
 	{
-		UID:           "W6WyRvhWhEarGHs7GV5unjVi8DYX",
+		FirebaseUID:   "W6WyRvhWhEarGHs7GV5unjVi8DYX",
 		DisplayName:   "TestingUser2",
 		Email:         "testing2@mediation-platform.com",
 		PhoneNumber:   "",
@@ -34,7 +34,7 @@ var testUserList = []*model.UserInfo{
 		EmailVerified: true,
 	},
 	{
-		UID:           "3fKQ3DyZhddm2H30J8ggTpsR35x2",
+		FirebaseUID:   "3fKQ3DyZhddm2H30J8ggTpsR35x2",
 		DisplayName:   "TestingUser3",
 		Email:         "testing3@mediation-platform.com",
 		PhoneNumber:   "",
@@ -45,17 +45,12 @@ var testUserList = []*model.UserInfo{
 }
 
 func TestMain(m *testing.M) {
-	// Set Firebase Auth emulator host environment variable
-	emulatorHost := "localhost:9099"
-	if err := os.Setenv("FIREBASE_AUTH_EMULATOR_HOST", emulatorHost); err != nil {
-		panic(err)
-	}
-
 	// Init Firebase
 	var err error
 	firebaseAuth, err = NewFirebaseAuth(context.Background(), &FirebaseAuthConfig{
-		ProjectID: "mediation-platform-test",
-		KeyFile:   "",
+		EmulatorHost: "localhost:9099",
+		ProjectID:    "mediation-platform-test",
+		KeyFile:      "",
 	})
 	if err != nil {
 		panic(err)
@@ -99,7 +94,7 @@ func TestFirebaseAuthenticateByToken(t *testing.T) {
 	}{
 		{
 			name:    "valid token",
-			uid:     testUserList[0].UID,
+			uid:     testUserList[0].FirebaseUID,
 			isValid: true,
 		},
 		{
@@ -112,6 +107,7 @@ func TestFirebaseAuthenticateByToken(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			mockToken, err := createMockIDToken(testCase.uid)
+			t.Log(mockToken)
 			assert.Nil(t, err)
 			assert.NotEmpty(t, mockToken)
 
@@ -135,17 +131,17 @@ func TestGetUserInfo(t *testing.T) {
 	}{
 		{
 			name: testUserList[0].DisplayName,
-			uid:  testUserList[0].UID,
+			uid:  testUserList[0].FirebaseUID,
 			want: testUserList[0],
 		},
 		{
 			name: testUserList[1].DisplayName,
-			uid:  testUserList[1].UID,
+			uid:  testUserList[1].FirebaseUID,
 			want: testUserList[1],
 		},
 		{
 			name: testUserList[2].DisplayName,
-			uid:  testUserList[2].UID,
+			uid:  testUserList[2].FirebaseUID,
 			want: testUserList[2],
 		},
 		{

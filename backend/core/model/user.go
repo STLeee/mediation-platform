@@ -1,7 +1,8 @@
 package model
 
 type UserInfo struct {
-	UID           string `json:"uid"`
+	UserID        string `json:"user_id"`
+	FirebaseUID   string `json:"firebase_uid"`
 	DisplayName   string `json:"display_name"`
 	Email         string `json:"email"`
 	PhoneNumber   string `json:"phone_number"`

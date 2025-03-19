@@ -53,9 +53,12 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 	loadConfig("non_existent_file.yaml")
 }
 
-func TestSetupRouters(t *testing.T) {
-	utils.TestRouterRegister(t, registerRouters, []string{
-		"/health/liveness",
-		"/health/readiness",
+func TestRegisterRouters(t *testing.T) {
+	utils.TestEngineRouterRegister(t, func(engine *gin.Engine) {
+		registerAPIRouters(engine, nil)
+	}, []string{
+		"/api/health/liveness",
+		"/api/health/readiness",
+		"/api/v1/user/:user_id",
 	})
 }

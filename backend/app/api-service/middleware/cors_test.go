@@ -38,7 +38,7 @@ func TestCors(t *testing.T) {
 
 	for _, testCase := range testCases {
 		httpRecorder := utils.RegisterAndRecordHttpRequest(func(routeGroup *gin.RouterGroup) {
-			routeGroup.Use(Cors())
+			routeGroup.Use(CorsHandler())
 			routeGroup.Handle(testCase.method, "/test", func(c *gin.Context) {
 				c.JSON(200, gin.H{})
 			})

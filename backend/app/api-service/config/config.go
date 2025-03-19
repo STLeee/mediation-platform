@@ -5,6 +5,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
 	coreService "github.com/STLeee/mediation-platform/backend/core/service"
 )
 
@@ -22,8 +23,9 @@ type ServiceConfig struct {
 }
 
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	Service ServiceConfig `yaml:"service"`
+	Server      ServerConfig               `yaml:"server"`
+	Service     ServiceConfig              `yaml:"service"`
+	AuthService coreAuth.AuthServiceConfig `yaml:"auth_service"`
 }
 
 var cfg *Config

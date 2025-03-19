@@ -6,3 +6,9 @@ server:
 service:
   name: api-service
   env: test
+
+auth_service:
+  firebase:
+    project_id: mediation-platform-test
+    key_file: ../../../key/gcp-sa-key.test.json
+    emulator_host: localhost:9099
