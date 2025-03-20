@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,8 +19,8 @@ func TokenAuthHandler(authService coreAuth.BaseAuthService) gin.HandlerFunc {
 		uid, err := authService.AuthenticateByToken(c, token)
 		if err != nil {
 			responseError := model.HttpStatusCodeError{StatusCode: http.StatusInternalServerError}
-			if errors.As(err, &coreAuth.AuthServiceError{}) {
-				errType := err.(coreAuth.AuthServiceError).ErrType
+			if authServiceError, ok := err.(coreAuth.AuthServiceError); ok {
+				errType := authServiceError.ErrType
 				if errType == coreAuth.AuthServiceErrorTypeTokenInvalid || errType == coreAuth.AuthServiceErrorTypeUserNotFound {
 					responseError = model.HttpStatusCodeError{StatusCode: http.StatusUnauthorized}
 				}
@@ -35,8 +34,8 @@ func TokenAuthHandler(authService coreAuth.BaseAuthService) gin.HandlerFunc {
 		userInfo, err := authService.GetUserInfo(c, uid)
 		if err != nil {
 			responseError := model.HttpStatusCodeError{StatusCode: http.StatusInternalServerError}
-			if errors.As(err, &coreAuth.AuthServiceError{}) {
-				errType := err.(coreAuth.AuthServiceError).ErrType
+			if authServiceError, ok := err.(coreAuth.AuthServiceError); ok {
+				errType := authServiceError.ErrType
 				if errType == coreAuth.AuthServiceErrorTypeUserNotFound {
 					responseError = model.HttpStatusCodeError{StatusCode: http.StatusUnauthorized}
 				}
