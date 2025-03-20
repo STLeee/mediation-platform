@@ -5,9 +5,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/STLeee/mediation-platform/backend/core/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/STLeee/mediation-platform/backend/app/api-service/config"
+	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
+	"github.com/STLeee/mediation-platform/backend/core/utils"
 )
 
 func TestMain(m *testing.M) {
@@ -51,6 +54,28 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 
 	// Load a non-existent config file
 	loadConfig("non_existent_file.yaml")
+}
+
+func TestInitAuthService(t *testing.T) {
+	// Test initAuthService function
+	authService := initAuthService(&config.Config{
+		AuthService: coreAuth.AuthServiceConfig{
+			FirebaseAuthConfig: &coreAuth.FirebaseAuthConfig{
+				ProjectID:    "test_project_id",
+				KeyFile:      "test_key_file",
+				EmulatorHost: "test_emulator_host",
+			},
+		},
+	})
+	assert.NotNil(t, authService)
+}
+
+func TestInitAuthService_NoConfig(t *testing.T) {
+	defer func() {
+		assert.NotNil(t, recover())
+	}()
+
+	initAuthService(&config.Config{})
 }
 
 func TestRegisterRouters(t *testing.T) {
