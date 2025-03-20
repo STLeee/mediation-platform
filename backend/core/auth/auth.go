@@ -60,8 +60,10 @@ type BaseAuthService interface {
 
 // NewAuthService creates a new authentication service
 func NewAuthService(ctx context.Context, cfg *AuthServiceConfig) (BaseAuthService, error) {
-	if cfg.FirebaseAuthConfig != nil {
-		return NewFirebaseAuth(ctx, cfg.FirebaseAuthConfig)
+	if cfg != nil {
+		if cfg.FirebaseAuthConfig != nil {
+			return NewFirebaseAuth(ctx, cfg.FirebaseAuthConfig)
+		}
 	}
 	return nil, AuthServiceError{
 		ErrType: AuthServiceErrorTypeServerError,
