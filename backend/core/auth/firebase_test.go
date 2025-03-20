@@ -60,7 +60,7 @@ func TestMain(m *testing.M) {
 }
 
 // createMockIDToken generates a mock Firebase ID token for testing purposes
-func createMockIDToken(uid string) (string, error) {
+func createMockIDToken(uid string) string {
 	// Define the token claims
 	now := time.Now().Unix()
 	exp := now + 60
@@ -80,38 +80,42 @@ func createMockIDToken(uid string) (string, error) {
 	secret := []byte("testing-secret")
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
-	return tokenString, nil
+	return tokenString
 }
 
 func TestFirebaseAuthenticateByToken(t *testing.T) {
 	testCases := []struct {
 		name    string
 		uid     string
+		token   string
 		isValid bool
 	}{
 		{
 			name:    "valid token",
 			uid:     testUserList[0].FirebaseUID,
+			token:   createMockIDToken(testUserList[0].FirebaseUID),
 			isValid: true,
 		},
 		{
 			name:    "invalid token",
-			uid:     "invalid-uid",
+			uid:     "testing",
+			token:   "invalid-token",
+			isValid: false,
+		},
+		{
+			name:    "user not found",
+			uid:     "not-found",
+			token:   createMockIDToken("not-found"),
 			isValid: false,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			mockToken, err := createMockIDToken(testCase.uid)
-			t.Log(mockToken)
-			assert.Nil(t, err)
-			assert.NotEmpty(t, mockToken)
-
-			uid, err := firebaseAuth.AuthenticateByToken(context.Background(), mockToken)
+			uid, err := firebaseAuth.AuthenticateByToken(context.Background(), testCase.token)
 			if testCase.isValid {
 				assert.Nil(t, err)
 				assert.Equal(t, testCase.uid, uid)
