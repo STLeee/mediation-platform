@@ -12,3 +12,9 @@ func TestRegisterHealthRouter(t *testing.T) {
 		"/readiness",
 	})
 }
+
+func TestRegisterV1UserRouter(t *testing.T) {
+	utils.TestRouterRegister(t, RegisterV1UserRouter, []string{
+		"/:user_id",
+	})
+}
