@@ -2,17 +2,11 @@ package utils
 
 import (
 	"bytes"
-	"os"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	gin.SetMode(gin.TestMode)
-	os.Exit(m.Run())
-}
 
 func TestTestRouterRegister(t *testing.T) {
 	routerRegisterFunc := func(router *gin.RouterGroup) {

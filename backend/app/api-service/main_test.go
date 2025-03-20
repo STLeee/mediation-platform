@@ -13,15 +13,10 @@ import (
 	"github.com/STLeee/mediation-platform/backend/core/utils"
 )
 
-func TestMain(m *testing.M) {
+func TestApp(t *testing.T) {
 	// Set Gin to Test Mode
 	gin.SetMode(gin.TestMode)
 
-	// Run tests
-	os.Exit(m.Run())
-}
-
-func TestApp(t *testing.T) {
 	// Test main function
 	go main()
 

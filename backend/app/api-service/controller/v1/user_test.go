@@ -12,12 +12,12 @@ import (
 
 func TestGetUser(t *testing.T) {
 	testCases := []struct {
-		id       string
+		name     string
 		user     *coreModel.UserInfo
 		excepted *model.GetUserResponse
 	}{
 		{
-			id: "test_user_id",
+			name: "test_user_id",
 			user: &coreModel.UserInfo{
 				UserID:      "test_user_id",
 				DisplayName: "test_display_name",
@@ -36,11 +36,11 @@ func TestGetUser(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.id, func(t *testing.T) {
+		t.Run(testCase.name, func(t *testing.T) {
 			userController := NewUserController()
 			httpRecorder := utils.RecordHandlerHttpRequest(
 				userController.GetUser,
-				"GET", "/"+testCase.id,
+				"GET", "/"+testCase.name,
 				nil,
 				map[string]any{
 					"user": testCase.user,

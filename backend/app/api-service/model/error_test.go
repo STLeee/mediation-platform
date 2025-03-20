@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,58 +10,58 @@ import (
 
 func TestHttpStatusCodeError(t *testing.T) {
 	testCases := []struct {
-		id         string
+		name       string
 		statusCode int
 		message    string
 		err        error
 		expected   string
 	}{
 		{
-			id:         "400",
-			statusCode: 400,
+			name:       "bad-request",
+			statusCode: http.StatusBadRequest,
 			message:    "",
 			err:        fmt.Errorf("test-error"),
-			expected:   "Bad Request",
+			expected:   http.StatusText(http.StatusBadRequest),
 		},
 		{
-			id:         "400 with message",
-			statusCode: 400,
+			name:       "bad-request/with-message",
+			statusCode: http.StatusBadRequest,
 			message:    "test message",
 			err:        fmt.Errorf("test-error"),
 			expected:   "test message",
 		},
 		{
-			id:         "400 with message and no error",
-			statusCode: 400,
+			name:       "bad-request/with-no-error",
+			statusCode: http.StatusBadRequest,
 			message:    "test message",
 			err:        nil,
 			expected:   "test message",
 		},
 		{
-			id:         "400 with no error",
-			statusCode: 400,
+			name:       "bad-request/with-no-message-and-no-error",
+			statusCode: http.StatusBadRequest,
 			message:    "",
 			err:        nil,
-			expected:   "Bad Request",
+			expected:   http.StatusText(http.StatusBadRequest),
 		},
 		{
-			id:         "401",
-			statusCode: 401,
+			name:       "unauthorized",
+			statusCode: http.StatusUnauthorized,
 			message:    "",
 			err:        fmt.Errorf("test-error"),
-			expected:   "Unauthorized",
+			expected:   http.StatusText(http.StatusUnauthorized),
 		},
 		{
-			id:         "404",
-			statusCode: 404,
+			name:       "not-found",
+			statusCode: http.StatusNotFound,
 			message:    "",
 			err:        fmt.Errorf("test-error"),
-			expected:   "Not Found",
+			expected:   http.StatusText(http.StatusNotFound),
 		},
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.id, func(t *testing.T) {
+		t.Run(testCase.name, func(t *testing.T) {
 			ae := HttpStatusCodeError{
 				StatusCode: testCase.statusCode,
 				Message:    testCase.message,

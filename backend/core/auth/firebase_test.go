@@ -94,19 +94,19 @@ func TestFirebaseAuthenticateByToken(t *testing.T) {
 		isValid bool
 	}{
 		{
-			name:    "valid token",
+			name:    "valid-token",
 			uid:     testUserList[0].FirebaseUID,
 			token:   createMockIDToken(testUserList[0].FirebaseUID),
 			isValid: true,
 		},
 		{
-			name:    "invalid token",
+			name:    "invalid-token",
 			uid:     "testing",
 			token:   "invalid-token",
 			isValid: false,
 		},
 		{
-			name:    "user not found",
+			name:    "user-not-found",
 			uid:     "not-found",
 			token:   createMockIDToken("not-found"),
 			isValid: false,
@@ -132,6 +132,7 @@ func TestGetUserInfo(t *testing.T) {
 		name string
 		uid  string
 		want *model.UserInfo
+		err  error
 	}{
 		{
 			name: testUserList[0].DisplayName,
@@ -149,9 +150,11 @@ func TestGetUserInfo(t *testing.T) {
 			want: testUserList[2],
 		},
 		{
-			name: "invalid token",
+			name: "user-not-found",
 			uid:  "invalid-uid",
-			want: nil,
+			err: AuthServiceError{
+				ErrType: AuthServiceErrorTypeUserNotFound,
+			},
 		},
 	}
 
@@ -159,12 +162,11 @@ func TestGetUserInfo(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			userInfo, err := firebaseAuth.GetUserInfo(context.Background(), testCase.uid)
 			if testCase.want != nil {
-				assert.Nil(t, err)
 				assert.EqualValues(t, *testCase.want, *userInfo)
 			} else {
-				assert.NotNil(t, err)
 				assert.Nil(t, userInfo)
 			}
+			assert.Equal(t, testCase.err, err)
 		})
 	}
 }
