@@ -9,8 +9,8 @@ import (
 	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
 )
 
-// TokenAuthHandler is a middleware for token authentication
-func TokenAuthHandler(authService coreAuth.BaseAuthService) gin.HandlerFunc {
+// TokenAuthenticationHandler is a middleware for token authentication
+func TokenAuthenticationHandler(authService coreAuth.BaseAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get token from header
 		token := c.GetHeader("Authorization")

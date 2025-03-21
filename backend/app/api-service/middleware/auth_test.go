@@ -26,7 +26,7 @@ func (authService *TestAuthService) GetUserInfo(ctx context.Context, uid string)
 	return authService.GetUserInfoFunc(ctx, uid)
 }
 
-func TestTokenAuthHandler(t *testing.T) {
+func TestTokenAuthenticationHandler(t *testing.T) {
 	testCases := []struct {
 		name                   string
 		user                   *coreModel.UserInfo
@@ -88,7 +88,7 @@ func TestTokenAuthHandler(t *testing.T) {
 				},
 			}
 			httpRecorder := utils.RegisterAndRecordHttpRequest(func(routeGroup *gin.RouterGroup) {
-				routeGroup.Use(ErrorHandler(), TokenAuthHandler(testAuthService))
+				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(testAuthService))
 				routeGroup.Handle("GET", "/test", func(c *gin.Context) {
 					c.JSON(200, c.MustGet("user"))
 				})

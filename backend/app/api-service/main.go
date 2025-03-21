@@ -88,9 +88,9 @@ func registerAPIRouters(engine *gin.Engine, authService coreAuth.BaseAuthService
 
 	// Register v1 router
 	v1RouterGroup := apiRouterGroup.Group("/v1")
+	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(authService))
 
 	// Register v1 user router
 	userRouterGroup := v1RouterGroup.Group("/user")
-	userRouterGroup.Use(middleware.TokenAuthHandler(authService))
 	router.RegisterV1UserRouter(userRouterGroup)
 }
