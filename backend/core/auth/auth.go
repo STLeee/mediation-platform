@@ -55,7 +55,7 @@ func (e AuthServiceError) Unwrap() error {
 // BaseAuthService interface for authentication service
 type BaseAuthService interface {
 	AuthenticateByToken(ctx context.Context, token string) (uid string, err error)
-	GetUserInfo(ctx context.Context, uid string) (*model.UserInfo, error)
+	GetUserInfo(ctx context.Context, uid string) (*model.User, error)
 }
 
 // NewAuthService creates a new authentication service

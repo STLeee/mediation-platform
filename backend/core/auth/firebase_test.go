@@ -14,33 +14,30 @@ import (
 )
 
 var firebaseAuth *FirebaseAuth
-var testUserList = []*model.UserInfo{
+var testUserList = []*model.User{
 	{
-		FirebaseUID:   "LRgwDJoRP7BCYJBNmNrNL4rxhvgR",
-		DisplayName:   "TestingUser1",
-		Email:         "testing1@mediation-platform.com",
-		PhoneNumber:   "",
-		PhotoURL:      "",
-		Disabled:      false,
-		EmailVerified: false,
+		FirebaseUID: "LRgwDJoRP7BCYJBNmNrNL4rxhvgR",
+		DisplayName: "TestingUser1",
+		Email:       "testing1@mediation-platform.com",
+		PhoneNumber: "",
+		PhotoURL:    "",
+		Disabled:    false,
 	},
 	{
-		FirebaseUID:   "W6WyRvhWhEarGHs7GV5unjVi8DYX",
-		DisplayName:   "TestingUser2",
-		Email:         "testing2@mediation-platform.com",
-		PhoneNumber:   "",
-		PhotoURL:      "",
-		Disabled:      false,
-		EmailVerified: true,
+		FirebaseUID: "W6WyRvhWhEarGHs7GV5unjVi8DYX",
+		DisplayName: "TestingUser2",
+		Email:       "testing2@mediation-platform.com",
+		PhoneNumber: "",
+		PhotoURL:    "",
+		Disabled:    false,
 	},
 	{
-		FirebaseUID:   "3fKQ3DyZhddm2H30J8ggTpsR35x2",
-		DisplayName:   "TestingUser3",
-		Email:         "testing3@mediation-platform.com",
-		PhoneNumber:   "",
-		PhotoURL:      "",
-		Disabled:      true,
-		EmailVerified: false,
+		FirebaseUID: "3fKQ3DyZhddm2H30J8ggTpsR35x2",
+		DisplayName: "TestingUser3",
+		Email:       "testing3@mediation-platform.com",
+		PhoneNumber: "",
+		PhotoURL:    "",
+		Disabled:    true,
 	},
 }
 
@@ -131,7 +128,7 @@ func TestGetUserInfo(t *testing.T) {
 	testCases := []struct {
 		name string
 		uid  string
-		want *model.UserInfo
+		want *model.User
 		err  error
 	}{
 		{

@@ -87,7 +87,7 @@ func (firebaseAuth *FirebaseAuth) AuthenticateByToken(ctx context.Context, token
 }
 
 // GetUserInfo gets the user info by uid
-func (firebaseAuth *FirebaseAuth) GetUserInfo(ctx context.Context, uid string) (*model.UserInfo, error) {
+func (firebaseAuth *FirebaseAuth) GetUserInfo(ctx context.Context, uid string) (*model.User, error) {
 	userRecord, err := firebaseAuth.authClient.GetUser(ctx, uid)
 	if err != nil {
 		if firebaseErrorutils.IsNotFound(err) {
@@ -99,13 +99,12 @@ func (firebaseAuth *FirebaseAuth) GetUserInfo(ctx context.Context, uid string) (
 			Err:     err,
 		}
 	}
-	return &model.UserInfo{
-		FirebaseUID:   userRecord.UID,
-		DisplayName:   userRecord.DisplayName,
-		Email:         userRecord.Email,
-		PhoneNumber:   userRecord.PhoneNumber,
-		PhotoURL:      userRecord.PhotoURL,
-		Disabled:      userRecord.Disabled,
-		EmailVerified: userRecord.EmailVerified,
+	return &model.User{
+		FirebaseUID: userRecord.UID,
+		DisplayName: userRecord.DisplayName,
+		Email:       userRecord.Email,
+		PhoneNumber: userRecord.PhoneNumber,
+		PhotoURL:    userRecord.PhotoURL,
+		Disabled:    userRecord.Disabled,
 	}, nil
 }

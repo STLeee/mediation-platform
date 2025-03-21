@@ -1,26 +1,17 @@
 package db
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var testMongoDBConfig = &MongoDBConfig{
-	URI: "mongodb://admin:pass@127.0.0.1:27017/?directConnection=true",
-	TLS: true,
-	TLSConfig: &MongoDBTLSConfig{
-		CAFile:   "../../mongodb/tls/test-ca.pem",
-		CertFile: "../../mongodb/tls/test-client.pem",
-		KeyFile:  "../../mongodb/tls/mongodb-test-client.key",
-	},
-}
-
-func TestMongoDB(t *testing.T) {
+func TestNewAndCloseMongoDB(t *testing.T) {
 	// Init database
-	mongodb, err := NewMongoDB(testMongoDBConfig)
+	mongodb, err := NewMongoDB(context.Background(), LocalMongoDBConfig)
 	assert.Nil(t, err)
-	defer mongodb.Close()
+	defer mongodb.Close(context.Background())
 }
 
 func TestNewMongoDBError(t *testing.T) {
@@ -56,7 +47,7 @@ func TestNewMongoDBError(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			_, err := NewMongoDB(testCase.cfg)
+			_, err := NewMongoDB(context.Background(), testCase.cfg)
 			assert.Equal(t, testCase.errType, err.(DBError).ErrType)
 			assert.Equal(t, testCase.errMessage, err.(DBError).Message)
 		})

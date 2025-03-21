@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// Default values
 const (
 	DefaultMinPoolSize       = 1
 	DefaultMaxPoolSize       = 10
@@ -18,29 +19,47 @@ const (
 	DefaultTimeout           = 10 * time.Second
 )
 
-type MongoDBConfig struct {
-	URI               string            `yaml:"uri"`
-	TLS               bool              `yaml:"tls"`
-	TLSConfig         *MongoDBTLSConfig `yaml:"tls_config"`
-	MinPoolSize       int               `yaml:"min_pool_size"`
-	MaxPoolSize       int               `yaml:"max_pool_size"`
-	MaxConnIdleTime   time.Duration     `yaml:"max_conn_idle_time"`
-	ConnectionTimeout time.Duration     `yaml:"connection_timeout"`
-	Timeout           time.Duration     `yaml:"timeout"`
+// LocalMongoDBConfig is a config for local MongoDB
+var LocalMongoDBConfig = &MongoDBConfig{
+	URI: "mongodb://admin:pass@127.0.0.1:27017/?directConnection=true",
+	TLS: true,
+	TLSConfig: &MongoDBTLSConfig{
+		CAFile:   "../../mongodb/tls/test-ca.pem",
+		CertFile: "../../mongodb/tls/test-client.pem",
+		KeyFile:  "../../mongodb/tls/mongodb-test-client.key",
+	},
 }
 
+// MongoDBConfig is a config for MongoDB
+type MongoDBConfig struct {
+	URI string `yaml:"uri"`
+
+	TLS       bool              `yaml:"tls"`
+	TLSConfig *MongoDBTLSConfig `yaml:"tls_config"`
+
+	MinPoolSize int `yaml:"min_pool_size"`
+	MaxPoolSize int `yaml:"max_pool_size"`
+
+	MaxConnIdleTime   time.Duration `yaml:"max_conn_idle_time"`
+	ConnectionTimeout time.Duration `yaml:"connection_timeout"`
+	Timeout           time.Duration `yaml:"timeout"`
+}
+
+// MongoDBTLSConfig is a config for MongoDB TLS
 type MongoDBTLSConfig struct {
 	CAFile   string `yaml:"ca_file"`
 	CertFile string `yaml:"cert_file"`
 	KeyFile  string `yaml:"key_file"`
 }
 
+// MongoDB is a MongoDB client
 type MongoDB struct {
 	client *mongo.Client
 	cfg    *MongoDBConfig
 }
 
-func NewMongoDB(cfg *MongoDBConfig) (*MongoDB, error) {
+// NewMongoDB creates a new MongoDB
+func NewMongoDB(ctx context.Context, cfg *MongoDBConfig) (*MongoDB, error) {
 	fmt.Printf("MongoDBConfig: %+v\n", cfg)
 
 	// Set client options
@@ -99,10 +118,10 @@ func NewMongoDB(cfg *MongoDBConfig) (*MongoDB, error) {
 	}
 
 	// Ping MongoDB
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.ConnectionTimeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, cfg.ConnectionTimeout)
 	defer cancel()
-	if err := client.Ping(ctx, nil); err != nil {
-		mongoDB.Close()
+	if err := client.Ping(timeoutCtx, nil); err != nil {
+		mongoDB.Close(ctx)
 		return nil, DBError{
 			ErrType: DBErrorTypeServerError,
 			Message: "failed to ping MongoDB",
@@ -113,8 +132,14 @@ func NewMongoDB(cfg *MongoDBConfig) (*MongoDB, error) {
 	return mongoDB, nil
 }
 
-func (db *MongoDB) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), db.cfg.ConnectionTimeout)
+// Close closes the MongoDB client
+func (db *MongoDB) Close(ctx context.Context) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, db.cfg.ConnectionTimeout)
 	defer cancel()
-	db.client.Disconnect(ctx)
+	db.client.Disconnect(timeoutCtx)
+}
+
+// Collection returns a collection
+func (db *MongoDB) Collection(database, collection string) *mongo.Collection {
+	return db.client.Database(database).Collection(collection)
 }
