@@ -139,7 +139,7 @@ func (db *MongoDB) Close(ctx context.Context) {
 	db.client.Disconnect(timeoutCtx)
 }
 
-// Collection returns a collection
-func (db *MongoDB) Collection(database, collection string) *mongo.Collection {
+// GetCollection returns a collection
+func (db *MongoDB) GetCollection(database, collection string) *mongo.Collection {
 	return db.client.Database(database).Collection(collection)
 }
