@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/STLeee/mediation-platform/backend/core/auth"
 	"github.com/STLeee/mediation-platform/backend/core/db"
 	"github.com/STLeee/mediation-platform/backend/core/model"
 	"github.com/STLeee/mediation-platform/backend/core/utils"
@@ -17,10 +18,38 @@ var userMongoDBRepository *UserMongoDBRepository
 
 var localUsers = []*model.User{
 	{
-		UserID:      "67ac56653fee2207c557b99c",
+		UserID:      "000000000000000000000001",
+		FirebaseUID: "LRgwDJoRP7BCYJBNmNrNL4rxhvgR",
+		DisplayName: "TestingUser1",
+		Email:       "testing1@mediation-platform.com",
+		PhoneNumber: "",
+		PhotoURL:    "",
+		Disabled:    false,
+	},
+	{
+		UserID:      "000000000000000000000002",
 		FirebaseUID: "W6WyRvhWhEarGHs7GV5unjVi8DYX",
 		DisplayName: "TestingUser2",
 		Email:       "testing2@mediation-platform.com",
+		PhoneNumber: "",
+		PhotoURL:    "",
+		Disabled:    false,
+	},
+	{
+		UserID:      "000000000000000000000003",
+		FirebaseUID: "3fKQ3DyZhddm2H30J8ggTpsR35x2",
+		DisplayName: "TestingUser3",
+		Email:       "testing3@mediation-platform.com",
+		PhoneNumber: "",
+		PhotoURL:    "",
+		Disabled:    true,
+	},
+	{
+		// Not in db
+		UserID:      "",
+		FirebaseUID: "kEnwA5bzGJrkEAnO2atgv6Fbbc2X",
+		DisplayName: "TestingUser4",
+		Email:       "testing4@mediation-platform.com",
 		PhoneNumber: "",
 		PhotoURL:    "",
 		Disabled:    false,
@@ -60,16 +89,89 @@ func assertError(t *testing.T, expectedErr, actualErr error) {
 }
 
 func TestMain(m *testing.M) {
+	// Connect to local Firebase
+	var err error
+	firebaseAuth, err := auth.NewFirebaseAuth(context.Background(), auth.LocalFirebaseAuthConfig)
+	if err != nil {
+		panic(err)
+	}
+
 	// Connect to local MongoDB
 	mongoDB, err := db.NewMongoDB(context.Background(), db.LocalMongoDBConfig)
 	if err != nil {
 		panic(err)
 	}
 	defer mongoDB.Close(context.Background())
-	userMongoDBRepository = NewUserMongoDB(mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUser])
+
+	userMongoDBRepository = NewUserMongoDB(firebaseAuth, mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUser])
 
 	// Run tests
 	os.Exit(m.Run())
+}
+
+func TestGetUserByToken(t *testing.T) {
+	ctx := context.Background()
+
+	// Test cases
+	testCases := []struct {
+		name         string
+		token        string
+		expectedUser *model.User
+		expectedErr  error
+		isNotInDB    bool
+	}{
+		{
+			name:         "user-found",
+			token:        utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, localUsers[0].FirebaseUID),
+			expectedUser: localUsers[0],
+			expectedErr:  nil,
+		},
+		{
+			name:        "invalid-token",
+			token:       "invalid-token",
+			expectedErr: auth.AuthServiceError{ErrType: auth.AuthServiceErrorTypeTokenInvalid},
+		},
+		{
+			name:        "user-not-found-from-auth",
+			token:       utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, "not-found-auth-uid"),
+			expectedErr: auth.AuthServiceError{ErrType: auth.AuthServiceErrorTypeUserNotFound},
+		},
+		{
+			name:         "user-not-in-db",
+			token:        utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, localUsers[3].FirebaseUID),
+			expectedUser: localUsers[3],
+			isNotInDB:    true,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			user, err := userMongoDBRepository.GetUserByToken(ctx, testCase.token)
+			if testCase.expectedUser != nil {
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				// Defer clean up
+				if testCase.isNotInDB {
+					assert.Empty(t, testCase.expectedUser.UserID)
+					testCase.expectedUser.UserID = user.UserID
+					defer func() {
+						err := userMongoDBRepository.DeleteUserByID(ctx, user.UserID)
+						if err != nil {
+							t.Fatal(err)
+						}
+					}()
+				}
+
+				assertUser(t, testCase.expectedUser, user)
+			} else {
+				assert.ErrorAs(t, err, &testCase.expectedErr)
+				if _, ok := err.(RepositoryError); ok {
+					assert.Equal(t, testCase.expectedErr.(auth.AuthServiceError).ErrType, err.(RepositoryError).ErrType)
+				}
+			}
+		})
+	}
 }
 
 func TestUserMongoDBRepository_CreateUser(t *testing.T) {

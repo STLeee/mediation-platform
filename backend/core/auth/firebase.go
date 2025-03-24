@@ -11,8 +11,11 @@ import (
 	"google.golang.org/api/option"
 )
 
-// FIREBASE_AUTH_NAME is the name of the firebase authentication
-const FIREBASE_AUTH_NAME = "firebase"
+var LocalFirebaseAuthConfig = &FirebaseAuthConfig{
+	EmulatorHost: "localhost:9099",
+	ProjectID:    "mediation-platform-test",
+	KeyFile:      "",
+}
 
 // FirebaseAuthConfig struct for firebase authentication configuration
 type FirebaseAuthConfig struct {
@@ -86,25 +89,29 @@ func (firebaseAuth *FirebaseAuth) AuthenticateByToken(ctx context.Context, token
 	return verifiedToken.UID, nil
 }
 
-// GetUserInfo gets the user info by uid
-func (firebaseAuth *FirebaseAuth) GetUserInfo(ctx context.Context, uid string) (*model.User, error) {
+// GetUserInfoAndMapping gets user info and mapping
+func (firebaseAuth *FirebaseAuth) GetUserInfoAndMapping(ctx context.Context, uid string) (user *model.User, mapping map[string]any, err error) {
 	userRecord, err := firebaseAuth.authClient.GetUser(ctx, uid)
 	if err != nil {
 		if firebaseErrorutils.IsNotFound(err) {
-			return nil, AuthServiceError{ErrType: AuthServiceErrorTypeUserNotFound}
+			return nil, nil, AuthServiceError{ErrType: AuthServiceErrorTypeUserNotFound}
 		}
-		return nil, AuthServiceError{
+		return nil, nil, AuthServiceError{
 			ErrType: AuthServiceErrorTypeServerError,
 			Message: "failed to get user info",
 			Err:     err,
 		}
 	}
-	return &model.User{
+	user = &model.User{
 		FirebaseUID: userRecord.UID,
 		DisplayName: userRecord.DisplayName,
 		Email:       userRecord.Email,
 		PhoneNumber: userRecord.PhoneNumber,
 		PhotoURL:    userRecord.PhotoURL,
 		Disabled:    userRecord.Disabled,
-	}, nil
+	}
+	mapping = map[string]any{
+		"firebase_uid": userRecord.UID,
+	}
+	return user, mapping, nil
 }

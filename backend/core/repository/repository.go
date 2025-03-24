@@ -128,6 +128,12 @@ func (repo *MongoDBRepository) FindByID(ctx context.Context, id string, result m
 
 	// Find one
 	filter := bson.M{"_id": objectID}
+	return repo.FindOneByFilter(ctx, filter, result)
+}
+
+// FindOneByFilter finds one by filter
+func (repo *MongoDBRepository) FindOneByFilter(ctx context.Context, filter map[string]any, result model.MongoDBDocument) error {
+	// Find one
 	if err := repo.collection.FindOne(ctx, filter).Decode(result); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return RepositoryError{
@@ -147,7 +153,7 @@ func (repo *MongoDBRepository) FindByID(ctx context.Context, id string, result m
 	}
 
 	// Setup data from document
-	err = result.SetupDataFromDocument()
+	err := result.SetupDataFromDocument()
 	if err != nil {
 		return RepositoryError{
 			ErrType:    RepositoryErrorTypeInvalidData,

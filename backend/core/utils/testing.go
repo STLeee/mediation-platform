@@ -62,5 +62,5 @@ func RecordHandlerHttpRequest(handler gin.HandlerFunc, method string, path strin
 func SimplyValidTimestamp(timestamp time.Time) bool {
 	fromTime := time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC)
 	toTime := time.Now()
-	return fromTime.Before(timestamp) && timestamp.Before(toTime)
+	return (fromTime.Before(timestamp) || fromTime.Equal(timestamp)) && (toTime.After(timestamp) || toTime.Equal(timestamp))
 }

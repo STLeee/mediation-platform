@@ -2,19 +2,17 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/STLeee/mediation-platform/backend/core/model"
+	"github.com/STLeee/mediation-platform/backend/core/utils"
 )
 
 var firebaseAuth *FirebaseAuth
-var testUserList = []*model.User{
+var localUsers = []*model.User{
 	{
 		FirebaseUID: "LRgwDJoRP7BCYJBNmNrNL4rxhvgR",
 		DisplayName: "TestingUser1",
@@ -42,13 +40,9 @@ var testUserList = []*model.User{
 }
 
 func TestMain(m *testing.M) {
-	// Init Firebase
+	// Connect to local Firebase
 	var err error
-	firebaseAuth, err = NewFirebaseAuth(context.Background(), &FirebaseAuthConfig{
-		EmulatorHost: "localhost:9099",
-		ProjectID:    "mediation-platform-test",
-		KeyFile:      "",
-	})
+	firebaseAuth, err = NewFirebaseAuth(context.Background(), LocalFirebaseAuthConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -56,75 +50,53 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// createMockIDToken generates a mock Firebase ID token for testing purposes
-func createMockIDToken(uid string) string {
-	// Define the token claims
-	now := time.Now().Unix()
-	exp := now + 60
-	claims := jwt.MapClaims{
-		"iss": fmt.Sprintf("https://securetoken.google.com/%s", firebaseAuth.cfg.ProjectID),
-		"aud": firebaseAuth.cfg.ProjectID,
-		"uid": uid,
-		"sub": uid,
-		"iat": now,
-		"exp": exp,
-	}
-
-	// Create the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign the token with a dummy secret
-	secret := []byte("testing-secret")
-	tokenString, err := token.SignedString(secret)
-	if err != nil {
-		panic(err)
-	}
-
-	return tokenString
-}
-
 func TestFirebaseAuthenticateByToken(t *testing.T) {
 	testCases := []struct {
-		name    string
-		uid     string
-		token   string
-		isValid bool
+		name        string
+		uid         string
+		token       string
+		expectedErr error
 	}{
 		{
-			name:    "valid-token",
-			uid:     testUserList[0].FirebaseUID,
-			token:   createMockIDToken(testUserList[0].FirebaseUID),
-			isValid: true,
+			name:        "valid-token",
+			uid:         localUsers[0].FirebaseUID,
+			token:       utils.CreateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, localUsers[0].FirebaseUID),
+			expectedErr: nil,
 		},
 		{
-			name:    "invalid-token",
-			uid:     "testing",
-			token:   "invalid-token",
-			isValid: false,
+			name:        "invalid-token",
+			uid:         "testing",
+			token:       "invalid-token",
+			expectedErr: AuthServiceError{ErrType: AuthServiceErrorTypeTokenInvalid},
 		},
 		{
-			name:    "user-not-found",
-			uid:     "not-found",
-			token:   createMockIDToken("not-found"),
-			isValid: false,
+			name:        "user-not-found",
+			uid:         "not-found",
+			token:       utils.CreateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, "not-found"),
+			expectedErr: AuthServiceError{ErrType: AuthServiceErrorTypeUserNotFound},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			uid, err := firebaseAuth.AuthenticateByToken(context.Background(), testCase.token)
-			if testCase.isValid {
-				assert.Nil(t, err)
+			if testCase.expectedErr == nil {
+				if err != nil {
+					t.Fatal(err)
+				}
 				assert.Equal(t, testCase.uid, uid)
 			} else {
-				assert.NotNil(t, err)
+				assert.ErrorAs(t, err, &testCase.expectedErr)
 				assert.Empty(t, uid)
+				if _, ok := err.(AuthServiceError); ok {
+					assert.Equal(t, testCase.expectedErr.(AuthServiceError).ErrType, err.(AuthServiceError).ErrType)
+				}
 			}
 		})
 	}
 }
 
-func TestGetUserInfo(t *testing.T) {
+func TestGetUserInfoAndMapping(t *testing.T) {
 	testCases := []struct {
 		name string
 		uid  string
@@ -132,19 +104,19 @@ func TestGetUserInfo(t *testing.T) {
 		err  error
 	}{
 		{
-			name: testUserList[0].DisplayName,
-			uid:  testUserList[0].FirebaseUID,
-			want: testUserList[0],
+			name: localUsers[0].DisplayName,
+			uid:  localUsers[0].FirebaseUID,
+			want: localUsers[0],
 		},
 		{
-			name: testUserList[1].DisplayName,
-			uid:  testUserList[1].FirebaseUID,
-			want: testUserList[1],
+			name: localUsers[1].DisplayName,
+			uid:  localUsers[1].FirebaseUID,
+			want: localUsers[1],
 		},
 		{
-			name: testUserList[2].DisplayName,
-			uid:  testUserList[2].FirebaseUID,
-			want: testUserList[2],
+			name: localUsers[2].DisplayName,
+			uid:  localUsers[2].FirebaseUID,
+			want: localUsers[2],
 		},
 		{
 			name: "user-not-found",
@@ -157,9 +129,10 @@ func TestGetUserInfo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			userInfo, err := firebaseAuth.GetUserInfo(context.Background(), testCase.uid)
+			userInfo, mapping, err := firebaseAuth.GetUserInfoAndMapping(context.Background(), testCase.uid)
 			if testCase.want != nil {
-				assert.EqualValues(t, *testCase.want, *userInfo)
+				assert.Equal(t, *testCase.want, *userInfo)
+				assert.Equal(t, testCase.want.FirebaseUID, mapping["firebase_uid"])
 			} else {
 				assert.Nil(t, userInfo)
 			}
