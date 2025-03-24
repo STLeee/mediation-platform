@@ -2,36 +2,11 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/STLeee/mediation-platform/backend/core/db"
 	"github.com/STLeee/mediation-platform/backend/core/model"
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
-
-// UserInMongoDB is a user in MongoDB
-type UserInMongoDB struct {
-	ID         bson.ObjectID `bson:"_id"`
-	model.User `bson:",inline"`
-}
-
-func NewUserInMongoDB(user *model.User) (*UserInMongoDB, error) {
-	userInMongoDB := &UserInMongoDB{
-		User: *user,
-	}
-	if user.UserID != "" {
-		var err error
-		userInMongoDB.ID, err = bson.ObjectIDFromHex(user.UserID)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return userInMongoDB, nil
-}
-
-func (userInMongoDB *UserInMongoDB) ToUser() *model.User {
-	userInMongoDB.UserID = userInMongoDB.ID.Hex()
-	return &userInMongoDB.User
-}
 
 // UserRepository is an interface for user repository
 type UserRepository interface {
@@ -50,12 +25,40 @@ func NewUserMongoDB(mongoDB *db.MongoDB, cfg *MongoDBRepositoryConfig) *UserMong
 	}
 }
 
+// CreateUser create a user
+func (repo *UserMongoDBRepository) CreateUser(ctx context.Context, user *model.User) (string, error) {
+	// Set created at, updated at, and last login at
+	now := time.Now()
+	user.CreatedAt = now
+	user.UpdatedAt = now
+	user.LastLoginAt = now
+
+	// Insert one
+	userInMongoDB, err := model.NewUserInMongoDB(user)
+	if err != nil {
+		return "", err
+	}
+	return repo.InsertOne(ctx, userInMongoDB)
+}
+
 // GetUserByID get a user by user ID
 func (repo *UserMongoDBRepository) GetUserByID(ctx context.Context, userID string) (*model.User, error) {
-	userInMongoDB := &UserInMongoDB{}
+	// Find by ID
+	userInMongoDB := &model.UserInMongoDB{}
 	err := repo.FindByID(ctx, userID, userInMongoDB)
 	if err != nil {
 		return nil, err
 	}
-	return userInMongoDB.ToUser(), nil
+	return &userInMongoDB.User, nil
+}
+
+// UpdateUser updates a user
+func (repo *UserMongoDBRepository) UpdateUserByID(ctx context.Context, userID string, updateData map[string]any) error {
+	return repo.UpdateByID(ctx, userID, updateData)
+}
+
+// DeleteUserByID deletes a user by user ID
+func (repo *UserMongoDBRepository) DeleteUserByID(ctx context.Context, userID string) error {
+	// Delete by ID
+	return repo.DeleteByID(ctx, userID)
 }

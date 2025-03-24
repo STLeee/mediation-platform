@@ -105,9 +105,9 @@ func TestNewAuthService(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			authService, err := NewAuthService(context.Background(), testCase.cfg)
 			if err == nil {
-				excepted := reflect.TypeOf(testCase.expected).Elem().Name()
+				expected := reflect.TypeOf(testCase.expected).Elem().Name()
 				actual := reflect.TypeOf(authService).Elem().Name()
-				assert.Equal(t, excepted, actual)
+				assert.Equal(t, expected, actual)
 			} else {
 				t.Log(err)
 				assert.Equal(t, testCase.expected, err)

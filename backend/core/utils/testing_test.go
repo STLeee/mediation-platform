@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -45,4 +46,39 @@ func TestRecordHandlerHttpRequest(t *testing.T) {
 	assert.NotNil(t, httpRecorder)
 	assert.Equal(t, 200, httpRecorder.Code)
 	assert.Equal(t, "{\"message\":\"this is testing\",\"test-key\":\"test-value\"}", httpRecorder.Body.String())
+}
+
+func TestSimplyValidTimestamp(t *testing.T) {
+	testCases := []struct {
+		name      string
+		timestamp time.Time
+		expected  bool
+	}{
+		{
+			name:      "valid-timestamp",
+			timestamp: time.Now(),
+			expected:  true,
+		},
+		{
+			name:      "zero-timestamp",
+			timestamp: time.Time{},
+			expected:  false,
+		},
+		{
+			name:      "future-timestamp",
+			timestamp: time.Now().Add(time.Hour),
+			expected:  false,
+		},
+		{
+			name:      "past-timestamp",
+			timestamp: time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+			expected:  false,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			isValid := SimplyValidTimestamp(testCase.timestamp)
+			assert.Equal(t, testCase.expected, isValid)
+		})
+	}
 }

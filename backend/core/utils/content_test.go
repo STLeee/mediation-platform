@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestToJSONString(t *testing.T) {
+func TestConvertToJSONString(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -69,8 +69,55 @@ func TestToJSONString(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			if got := ToJSONString(testCase.args.v); got != testCase.want {
+			if got := ConvertToJSONString(testCase.args.v); got != testCase.want {
 				assert.Equal(t, testCase.want, got)
+			}
+		})
+	}
+}
+
+func TestConvertStructToMap(t *testing.T) {
+	testCases := []struct {
+		name       string
+		v          interface{}
+		expected   map[string]interface{}
+		errMessage string
+	}{
+		{
+			name: "valid-input/struct",
+			v: struct {
+				Key string
+			}{
+				Key: "value",
+			},
+			expected: map[string]interface{}{
+				"Key": "value",
+			},
+		},
+		{
+			name: "valid-input/struct-pointer",
+			v: &struct {
+				Key string
+			}{
+				Key: "value",
+			},
+			expected: map[string]interface{}{
+				"Key": "value",
+			},
+		},
+		{
+			name:       "invalid-input",
+			v:          "invalid",
+			errMessage: "not a struct or pointer to struct",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got, err := ConvertStructToMap(testCase.v)
+			if err != nil {
+				assert.Equal(t, testCase.errMessage, err.Error())
+			} else {
+				assert.Equal(t, testCase.expected, got)
 			}
 		})
 	}

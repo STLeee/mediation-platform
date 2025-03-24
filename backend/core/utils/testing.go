@@ -4,13 +4,14 @@ import (
 	"io"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
 // TestEngineRouterRegister tests the engine router registration
-func TestEngineRouterRegister(t *testing.T, routerRegisterFunc func(*gin.Engine), exceptedPaths []string) {
+func TestEngineRouterRegister(t *testing.T, routerRegisterFunc func(*gin.Engine), expectedPaths []string) {
 	gin.SetMode(gin.TestMode)
 	engine := gin.Default()
 	routerRegisterFunc(engine)
@@ -21,14 +22,14 @@ func TestEngineRouterRegister(t *testing.T, routerRegisterFunc func(*gin.Engine)
 		paths = append(paths, route.Path)
 	}
 
-	assert.ElementsMatch(t, exceptedPaths, paths)
+	assert.ElementsMatch(t, expectedPaths, paths)
 }
 
 // TestRouterRegister tests the router registration
-func TestRouterRegister(t *testing.T, routerRegisterFunc func(*gin.RouterGroup), exceptedPaths []string) {
+func TestRouterRegister(t *testing.T, routerRegisterFunc func(*gin.RouterGroup), expectedPaths []string) {
 	TestEngineRouterRegister(t, func(engine *gin.Engine) {
 		routerRegisterFunc(engine.Group("/"))
-	}, exceptedPaths)
+	}, expectedPaths)
 }
 
 // RegisterAndRecordHttpRequest registers the router and records the http request
@@ -55,4 +56,11 @@ func RecordHandlerHttpRequest(handler gin.HandlerFunc, method string, path strin
 
 	handler(ctx)
 	return httpRecorder
+}
+
+// SimplyValidTimestamp simply checks if the timestamp is within a valid range
+func SimplyValidTimestamp(timestamp time.Time) bool {
+	fromTime := time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC)
+	toTime := time.Now()
+	return fromTime.Before(timestamp) && timestamp.Before(toTime)
 }

@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/STLeee/mediation-platform/backend/core/db"
+	"github.com/STLeee/mediation-platform/backend/core/model"
 )
 
 var LocalMongoDBRepositoryConfigs = MongoDBRepositoryConfigs{
@@ -25,12 +27,14 @@ const (
 	RepositoryErrorTypeServerError    RepositoryErrorType = "server_error"
 	RepositoryErrorTypeRecordNotFound RepositoryErrorType = "record_not_found"
 	RepositoryErrorTypeInvalidID      RepositoryErrorType = "invalid_id"
+	RepositoryErrorTypeInvalidData    RepositoryErrorType = "invalid_data"
 )
 
 var RepositoryErrorDefaultMessages = map[RepositoryErrorType]string{
 	RepositoryErrorTypeServerError:    "server error",
 	RepositoryErrorTypeRecordNotFound: "record not found",
 	RepositoryErrorTypeInvalidID:      "invalid ID",
+	RepositoryErrorTypeInvalidData:    "invalid data",
 }
 
 // RepositoryError struct for repository error
@@ -89,13 +93,29 @@ type MongoDBRepository struct {
 func NewMongoDBRepository(mongoDB *db.MongoDB, cfg *MongoDBRepositoryConfig) *MongoDBRepository {
 	return &MongoDBRepository{
 		mongoDB:    mongoDB,
-		collection: mongoDB.Collection(cfg.Database, cfg.Collection),
+		collection: mongoDB.GetCollection(cfg.Database, cfg.Collection),
 		cfg:        cfg,
 	}
 }
 
+// InsertOne inserts one
+func (repo *MongoDBRepository) InsertOne(ctx context.Context, data model.MongoDBDocument) (string, error) {
+	res, err := repo.collection.InsertOne(ctx, data)
+	if err != nil {
+		return "", RepositoryError{
+			ErrType:    RepositoryErrorTypeServerError,
+			Database:   repo.cfg.Database,
+			Collection: repo.cfg.Collection,
+			Message:    "failed to insert one",
+			Err:        err,
+		}
+	}
+	return res.InsertedID.(bson.ObjectID).Hex(), nil
+}
+
 // FindOneByID finds one by ID
-func (repo *MongoDBRepository) FindByID(ctx context.Context, id string, result any) error {
+func (repo *MongoDBRepository) FindByID(ctx context.Context, id string, result model.MongoDBDocument) error {
+	// Convert ID to ObjectID
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		return RepositoryError{
@@ -105,9 +125,10 @@ func (repo *MongoDBRepository) FindByID(ctx context.Context, id string, result a
 			Message:    "invalid ID",
 		}
 	}
+
+	// Find one
 	filter := bson.M{"_id": objectID}
 	if err := repo.collection.FindOne(ctx, filter).Decode(result); err != nil {
-		fmt.Printf("err: %+v\n", err)
 		if err == mongo.ErrNoDocuments {
 			return RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
@@ -124,6 +145,90 @@ func (repo *MongoDBRepository) FindByID(ctx context.Context, id string, result a
 			Err:        err,
 		}
 	}
-	fmt.Printf("result: %+v\n", result)
+
+	// Setup data from document
+	err = result.SetupDataFromDocument()
+	if err != nil {
+		return RepositoryError{
+			ErrType:    RepositoryErrorTypeInvalidData,
+			Database:   repo.cfg.Database,
+			Collection: repo.cfg.Collection,
+			Message:    "setup data from document failed",
+			Err:        err,
+		}
+	}
+	return nil
+}
+
+func (repo *MongoDBRepository) UpdateByID(ctx context.Context, id string, data map[string]any) error {
+	// Convert ID to ObjectID
+	objectID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return RepositoryError{
+			ErrType:    RepositoryErrorTypeInvalidID,
+			Database:   repo.cfg.Database,
+			Collection: repo.cfg.Collection,
+			Message:    "invalid ID",
+		}
+	}
+
+	// Set update data
+	data[model.UPDATED_TIMESTAMP_FIELD] = time.Now()
+	update := bson.M{"$set": data}
+
+	// Update one
+	res, err := repo.collection.UpdateByID(ctx, objectID, update)
+	if err != nil {
+		return RepositoryError{
+			ErrType:    RepositoryErrorTypeServerError,
+			Database:   repo.cfg.Database,
+			Collection: repo.cfg.Collection,
+			Message:    "failed to update one by ID",
+			Err:        err,
+		}
+	}
+	if res.MatchedCount == 0 {
+		return RepositoryError{
+			ErrType:    RepositoryErrorTypeRecordNotFound,
+			Database:   repo.cfg.Database,
+			Collection: repo.cfg.Collection,
+			Message:    "record not found",
+		}
+	}
+	return nil
+}
+
+func (repo *MongoDBRepository) DeleteByID(ctx context.Context, id string) error {
+	// Convert ID to ObjectID
+	objectID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return RepositoryError{
+			ErrType:    RepositoryErrorTypeInvalidID,
+			Database:   repo.cfg.Database,
+			Collection: repo.cfg.Collection,
+			Message:    "invalid ID",
+		}
+	}
+
+	// Delete one
+	filter := bson.M{"_id": objectID}
+	res, err := repo.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return RepositoryError{
+			ErrType:    RepositoryErrorTypeServerError,
+			Database:   repo.cfg.Database,
+			Collection: repo.cfg.Collection,
+			Message:    "failed to delete one by ID",
+			Err:        err,
+		}
+	}
+	if res.DeletedCount == 0 {
+		return RepositoryError{
+			ErrType:    RepositoryErrorTypeRecordNotFound,
+			Database:   repo.cfg.Database,
+			Collection: repo.cfg.Collection,
+			Message:    "record not found",
+		}
+	}
 	return nil
 }
