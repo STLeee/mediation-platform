@@ -30,3 +30,18 @@ func CreateMockFirebaseIDToken(projectID, uid string) string {
 
 	return tokenString
 }
+
+// DecodeMockFirebaseIDToken decodes a mock Firebase ID token for testing
+func DecodeMockFirebaseIDToken(tokenString string) (jwt.MapClaims, error) {
+	// Decode the token
+	claims := jwt.MapClaims{}
+	secret := []byte("testing-secret")
+	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return secret, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return claims, nil
+}
