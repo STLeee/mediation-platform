@@ -1,0 +1,27 @@
+server:
+  host: localhost
+  port: 8080
+  gin_mode: debug
+
+service:
+  name: api-service
+  env: test
+
+auth_service:
+  firebase:
+    project_id: mediation-platform-test
+    key_file: ../../../key/gcp-sa-key.test.json
+    emulator_host: localhost:9099
+
+mongodb:
+  uri: mongodb://admin:pass@127.0.0.1:27017/?directConnection=true
+  tls: true
+  tls_config:
+    ca_file: ../../mongodb/tls/test-ca.pem
+    cert_file: ../../mongodb/tls/test-client.pem
+    key_file: ../../mongodb/tls/mongodb-test-client.key
+
+repositories:
+  user:
+    database: mediation-platform
+    collection: user

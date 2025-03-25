@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "testing": "mediation-platform-test",
+    "staging": "mediation-platform-stag",
+    "production": "mediation-platform-prod"
+  },
+  "targets": {},
+  "etags": {}
+}
