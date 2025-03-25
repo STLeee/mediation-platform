@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"net/http"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/STLeee/mediation-platform/backend/app/api-service/model"
@@ -12,43 +14,74 @@ import (
 
 func TestGetUser(t *testing.T) {
 	testCases := []struct {
-		name     string
-		user     *coreModel.User
-		expected *model.GetUserResponse
+		name        string
+		tokenUser   *coreModel.User
+		queryUserID string
+		statusCode  int
+		expected    *model.GetUserResponse
+		isErr       bool
 	}{
 		{
-			name: "test_user_id",
-			user: &coreModel.User{
-				UserID:      "test_user_id",
-				DisplayName: "test_display_name",
-				Email:       "test_email",
-				PhoneNumber: "test_phone_number",
-				PhotoURL:    "test_photo_url",
+			name: "user-owner",
+			tokenUser: &coreModel.User{
+				UserID:      "test-user-id",
+				DisplayName: "test-display-name",
+				Email:       "test-email",
+				PhoneNumber: "test-phone-number",
+				PhotoURL:    "test-photo-url",
 			},
+			queryUserID: "test-user-id",
+			statusCode:  http.StatusOK,
 			expected: &model.GetUserResponse{
-				UserID:      "test_user_id",
-				DisplayName: "test_display_name",
-				Email:       "test_email",
-				PhoneNumber: "test_phone_number",
-				PhotoURL:    "test_photo_url",
+				UserID:      "test-user-id",
+				DisplayName: "test-display-name",
+				Email:       "test-email",
+				PhoneNumber: "test-phone-number",
+				PhotoURL:    "test-photo-url",
 			},
+		},
+		{
+			name: "user-not-owner",
+			tokenUser: &coreModel.User{
+				UserID:      "test-user-id",
+				DisplayName: "test-display-name",
+				Email:       "test-email",
+				PhoneNumber: "test-phone-number",
+				PhotoURL:    "test-photo-url",
+			},
+			queryUserID: "test-user-id-2",
+			statusCode:  http.StatusForbidden,
+			isErr:       true,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			userController := NewUserController()
-			httpRecorder := utils.RecordHandlerHttpRequest(
-				userController.GetUser,
-				"GET", "/"+testCase.name,
-				nil,
-				map[string]any{
-					"user": testCase.user,
+			httpRecorder := utils.RegisterAndRecordHttpRequest(
+				func(router *gin.RouterGroup) {
+					router.Use(func(ctx *gin.Context) {
+						// Set user to context
+						ctx.Set("user", testCase.tokenUser)
+						ctx.Next()
+
+						// Check error
+						if testCase.isErr {
+							err := ctx.Errors.Last()
+							assert.NotNil(t, err)
+							assert.Equal(t, testCase.statusCode, err.Err.(model.HttpStatusCodeError).StatusCode)
+						}
+					})
+					router.GET("/:user_id", userController.GetUser)
 				},
+				"GET",
+				"/"+testCase.queryUserID,
+				nil,
 			)
 
-			if testCase.expected != nil {
-				assert.Equal(t, 200, httpRecorder.Code)
+			// Check response
+			if !testCase.isErr {
+				assert.Equal(t, testCase.statusCode, httpRecorder.Code)
 				assert.Equal(t, utils.ConvertToJSONString(testCase.expected), httpRecorder.Body.String())
 			}
 		})

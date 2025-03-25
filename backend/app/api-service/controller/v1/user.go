@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,20 +29,24 @@ func NewUserController() *UserController {
 func (hc *UserController) GetUser(c *gin.Context) {
 	user := c.MustGet("user").(*coreModel.User)
 	userID := c.Param("user_id")
-	log.Printf("User: %+v", user)
-	log.Printf("User ID: %s", userID)
-	if userID == user.UserID {
-		c.JSON(200, model.GetUserResponse{
-			UserID:      user.UserID,
-			DisplayName: user.DisplayName,
-			Email:       user.Email,
-			PhoneNumber: user.PhoneNumber,
-			PhotoURL:    user.PhotoURL,
+	fmt.Printf("user: %v\n", user)
+	fmt.Printf("userID: %v\n", userID)
+
+	if userID != user.UserID {
+		fmt.Printf("User ID does not match\n")
+		c.Error(model.HttpStatusCodeError{
+			StatusCode: http.StatusForbidden,
+			Message:    "User ID does not match",
 		})
+		c.Abort()
 		return
 	}
-	c.Error(model.HttpStatusCodeError{
-		StatusCode: http.StatusForbidden,
-		Message:    "User ID does not match",
+
+	c.JSON(200, model.GetUserResponse{
+		UserID:      user.UserID,
+		DisplayName: user.DisplayName,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		PhotoURL:    user.PhotoURL,
 	})
 }

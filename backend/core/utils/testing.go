@@ -44,20 +44,6 @@ func RegisterAndRecordHttpRequest(routerRegisterFunc func(*gin.RouterGroup), met
 	return httpRecorder
 }
 
-// RecordHandlerHttpRequest records the http request with handler
-func RecordHandlerHttpRequest(handler gin.HandlerFunc, method string, path string, body io.Reader, ctxValues map[string]any) *httptest.ResponseRecorder {
-	httpRecorder := httptest.NewRecorder()
-	gin.SetMode(gin.TestMode)
-	ctx, _ := gin.CreateTestContext(httpRecorder)
-	for key, value := range ctxValues {
-		ctx.Set(key, value)
-	}
-	ctx.Request = httptest.NewRequest(method, path, body)
-
-	handler(ctx)
-	return httpRecorder
-}
-
 // SimplyValidTimestamp simply checks if the timestamp is within a valid range
 func SimplyValidTimestamp(timestamp time.Time) bool {
 	fromTime := time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC)

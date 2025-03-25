@@ -35,19 +35,6 @@ func TestRegisterAndRecordHttpRequest(t *testing.T) {
 	assert.Equal(t, "{\"message\":\"this is testing\"}", httpRecorder.Body.String())
 }
 
-func TestRecordHandlerHttpRequest(t *testing.T) {
-	handler := func(ctx *gin.Context) {
-		body := make([]byte, ctx.Request.ContentLength)
-		ctx.Request.Body.Read(body)
-		ctx.JSON(200, gin.H{"message": string(body), "test-key": ctx.MustGet("test-key")})
-	}
-	body := bytes.NewReader([]byte("this is testing"))
-	httpRecorder := RecordHandlerHttpRequest(handler, "GET", "/test", body, map[string]any{"test-key": "test-value"})
-	assert.NotNil(t, httpRecorder)
-	assert.Equal(t, 200, httpRecorder.Code)
-	assert.Equal(t, "{\"message\":\"this is testing\",\"test-key\":\"test-value\"}", httpRecorder.Body.String())
-}
-
 func TestSimplyValidTimestamp(t *testing.T) {
 	testCases := []struct {
 		name      string
