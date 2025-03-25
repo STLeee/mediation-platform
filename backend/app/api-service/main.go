@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -13,30 +14,45 @@ import (
 	"github.com/STLeee/mediation-platform/backend/app/api-service/middleware"
 	"github.com/STLeee/mediation-platform/backend/app/api-service/router"
 	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
+	coreDB "github.com/STLeee/mediation-platform/backend/core/db"
+	coreRepository "github.com/STLeee/mediation-platform/backend/core/repository"
 	coreService "github.com/STLeee/mediation-platform/backend/core/service"
 )
-
-func init() {
-	// Load config
-	cfg := loadConfig(config.DefaultConfigPath)
-
-	// Set Gin mode
-	gin.SetMode(cfg.Server.GinMode)
-}
 
 // @securityDefinitions.apikey TokenAuth
 // @in header
 // @name Authorization
 func main() {
-	// Get config
-	cfg := config.GetConfig()
+	// Parse arguments
+	configPath := flag.String("config", config.DefaultConfigPath, "Config file path")
+
+	// Load config
+	cfg, err := loadConfig(*configPath)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to load config: %v", err))
+	}
+
+	// Set Gin mode
+	gin.SetMode(cfg.Server.GinMode)
 
 	// Init auth service
-	authService := initAuthService(cfg)
+	authService, err := initAuthService(cfg)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to init auth service: %v", err))
+	}
+
+	// Init DB
+	mongoDB, err := initMongoDB(cfg)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to init MongoDB: %v", err))
+	}
+
+	// Init repositories
+	repositories := initMongoDBRepositories(authService, mongoDB, cfg)
 
 	// Setup server
 	engine := gin.Default()
-	registerAPIRouters(engine, authService)
+	registerAPIRouters(engine, repositories)
 
 	// Swagger
 	if cfg.Service.Environment == coreService.Testing {
@@ -54,27 +70,50 @@ func main() {
 }
 
 // Load config
-func loadConfig(path string) *config.Config {
+func loadConfig(path string) (*config.Config, error) {
 	cfg, err := config.LoadConfig(path)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return cfg
+	return cfg, nil
 }
 
 // Init auth service
-func initAuthService(cfg *config.Config) coreAuth.BaseAuthService {
+func initAuthService(cfg *config.Config) (coreAuth.BaseAuthService, error) {
 	authService, err := coreAuth.NewAuthService(context.Background(), &cfg.AuthService)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return authService
+	return authService, nil
+}
+
+// Init MongoDB
+func initMongoDB(cfg *config.Config) (*coreDB.MongoDB, error) {
+	mongoDB, err := coreDB.NewMongoDB(context.Background(), &cfg.MongoDB)
+	if err != nil {
+		return nil, err
+	}
+
+	return mongoDB, nil
+}
+
+// Init MongoDB repositories
+func initMongoDBRepositories(authService coreAuth.BaseAuthService, mongoDB *coreDB.MongoDB, cfg *config.Config) map[coreRepository.RepositoryName]any {
+	repositories := make(map[coreRepository.RepositoryName]any)
+
+	// Init user repository
+	userRepo := coreRepository.NewUserMongoDBRepository(authService, mongoDB, cfg.Repositories[coreRepository.RepositoryNameUser])
+	repositories[coreRepository.RepositoryNameUser] = userRepo
+
+	return repositories
 }
 
 // Register API routers
-func registerAPIRouters(engine *gin.Engine, authService coreAuth.BaseAuthService) {
+func registerAPIRouters(engine *gin.Engine, repositories map[coreRepository.RepositoryName]any) {
+	userRepo, _ := repositories[coreRepository.RepositoryNameUser].(*coreRepository.UserMongoDBRepository)
+
 	// Register middleware
 	engine.Use(middleware.CorsHandler())
 	engine.Use(middleware.ErrorHandler())
@@ -88,7 +127,7 @@ func registerAPIRouters(engine *gin.Engine, authService coreAuth.BaseAuthService
 
 	// Register v1 router
 	v1RouterGroup := apiRouterGroup.Group("/v1")
-	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(authService))
+	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(userRepo))
 
 	// Register v1 user router
 	userRouterGroup := v1RouterGroup.Group("/user")

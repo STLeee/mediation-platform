@@ -10,29 +10,28 @@ import (
 
 	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
 	coreModel "github.com/STLeee/mediation-platform/backend/core/model"
+	coreRepository "github.com/STLeee/mediation-platform/backend/core/repository"
 	"github.com/STLeee/mediation-platform/backend/core/utils"
 )
 
-type TestAuthService struct {
-	AuthenticateByTokenFunc   func(ctx context.Context, token string) (uid string, err error)
-	GetUserInfoAndMappingFunc func(ctx context.Context, uid string) (user *coreModel.User, mapping map[string]any, err error)
+type TestUserRepository struct {
+	GetUserByTokenFunc func(ctx context.Context, token string) (*coreModel.User, error)
 }
 
-func (authService *TestAuthService) AuthenticateByToken(ctx context.Context, token string) (uid string, err error) {
-	return authService.AuthenticateByTokenFunc(ctx, token)
+func (repo *TestUserRepository) GetUserByToken(ctx context.Context, token string) (*coreModel.User, error) {
+	return repo.GetUserByTokenFunc(ctx, token)
 }
 
-func (authService *TestAuthService) GetUserInfoAndMapping(ctx context.Context, uid string) (user *coreModel.User, mapping map[string]any, err error) {
-	return authService.GetUserInfoAndMappingFunc(ctx, uid)
+func (repo *TestUserRepository) GetUserByID(ctx context.Context, userID string) (*coreModel.User, error) {
+	return nil, nil
 }
 
 func TestTokenAuthenticationHandler(t *testing.T) {
 	testCases := []struct {
-		name                   string
-		user                   *coreModel.User
-		authenticateByTokenErr error
-		getUserInfoFuncErr     error
-		expected_code          int
+		name           string
+		user           *coreModel.User
+		getUserByIDErr error
+		expected_code  int
 	}{
 		{
 			name:          "no-error",
@@ -40,55 +39,40 @@ func TestTokenAuthenticationHandler(t *testing.T) {
 			expected_code: http.StatusOK,
 		},
 		{
-			name:                   "authenticate-by-token/server-error",
-			user:                   nil,
-			authenticateByTokenErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
-			expected_code:          http.StatusInternalServerError,
+			name:           "auth/server-error",
+			user:           nil,
+			getUserByIDErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
+			expected_code:  http.StatusInternalServerError,
 		},
 		{
-			name:                   "authenticate-by-token-error/token-invalid",
-			user:                   nil,
-			authenticateByTokenErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeTokenInvalid},
-			expected_code:          http.StatusUnauthorized,
+			name:           "auth/token-invalid",
+			user:           nil,
+			getUserByIDErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeTokenInvalid},
+			expected_code:  http.StatusUnauthorized,
 		},
 		{
-			name:                   "authenticate-by-token-error/user-not-found",
-			user:                   nil,
-			authenticateByTokenErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeUserNotFound},
-			expected_code:          http.StatusUnauthorized,
+			name:           "auth/user-not-found",
+			user:           nil,
+			getUserByIDErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeUserNotFound},
+			expected_code:  http.StatusUnauthorized,
 		},
 		{
-			name:               "get-user-info-error/server-error",
-			user:               nil,
-			getUserInfoFuncErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
-			expected_code:      http.StatusInternalServerError,
-		},
-		{
-			name:               "get-user-info-error/user-not-found",
-			user:               nil,
-			getUserInfoFuncErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeUserNotFound},
-			expected_code:      http.StatusUnauthorized,
+			name:           "db/server-error",
+			user:           nil,
+			getUserByIDErr: coreRepository.RepositoryError{ErrType: coreRepository.RepositoryErrorTypeServerError},
+			expected_code:  http.StatusInternalServerError,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			testAuthService := &TestAuthService{
-				AuthenticateByTokenFunc: func(ctx context.Context, token string) (uid string, err error) {
-					if testCase.authenticateByTokenErr != nil {
-						return "", testCase.authenticateByTokenErr
-					}
-					return "test_user_id", nil
-				},
-				GetUserInfoAndMappingFunc: func(ctx context.Context, uid string) (user *coreModel.User, mapping map[string]any, err error) {
-					if testCase.getUserInfoFuncErr != nil {
-						return nil, nil, testCase.getUserInfoFuncErr
-					}
-					return testCase.user, map[string]any{"test_auth_uid": "test_user_id"}, nil
+			testUserRepo := &TestUserRepository{
+				GetUserByTokenFunc: func(ctx context.Context, token string) (*coreModel.User, error) {
+					return testCase.user, testCase.getUserByIDErr
 				},
 			}
 			httpRecorder := utils.RegisterAndRecordHttpRequest(func(routeGroup *gin.RouterGroup) {
-				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(testAuthService, nil))
+				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(testUserRepo))
 				routeGroup.Handle("GET", "/test", func(c *gin.Context) {
 					c.JSON(200, c.MustGet("user"))
 				})
