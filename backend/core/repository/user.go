@@ -11,6 +11,7 @@ import (
 
 // UserRepository is an interface for user repository
 type UserRepository interface {
+	GetUserByToken(ctx context.Context, token string) (*model.User, error)
 	GetUserByID(ctx context.Context, userID string) (*model.User, error)
 }
 
@@ -20,8 +21,8 @@ type UserMongoDBRepository struct {
 	MongoDBRepository
 }
 
-// NewUserMongoDB creates a new UserMongoDB
-func NewUserMongoDB(authService auth.BaseAuthService, mongoDB *db.MongoDB, cfg *MongoDBRepositoryConfig) *UserMongoDBRepository {
+// NewUserMongoDBRepository creates a new UserMongoDBRepository
+func NewUserMongoDBRepository(authService auth.BaseAuthService, mongoDB *db.MongoDB, cfg *MongoDBRepositoryConfig) *UserMongoDBRepository {
 	return &UserMongoDBRepository{
 		authService:       authService,
 		MongoDBRepository: *NewMongoDBRepository(mongoDB, cfg),

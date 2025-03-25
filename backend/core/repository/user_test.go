@@ -103,7 +103,7 @@ func TestMain(m *testing.M) {
 	}
 	defer mongoDB.Close(context.Background())
 
-	userMongoDBRepository = NewUserMongoDB(firebaseAuth, mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUser])
+	userMongoDBRepository = NewUserMongoDBRepository(firebaseAuth, mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUser])
 
 	// Run tests
 	os.Exit(m.Run())
