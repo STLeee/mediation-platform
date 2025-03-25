@@ -1,6 +1,6 @@
 APP_NAME=api-service
 
-setup-local-infra:
+run-local-infra:
 	docker-compose -f docker-compose.infra.yml up
 
 stop-local-infra:
@@ -24,3 +24,7 @@ test-core-report:
 test:
 	$(MAKE) test-core
 	$(MAKE) test-app
+	$(MAKE) test-app APP_NAME=token-creator
+
+create-token:
+	$(MAKE) -C app/token-creator run

@@ -1,7 +1,7 @@
-setup-firebase-emulators:
+run-firebase-emulators:
 	firebase emulators:start --project testing --import=firebase/emulator_data --export-on-exit=firebase/emulator_data
 
-setup-local-infra:
+run-local-infra:
 	mkdir -p log
 	supervisord -n -c supervisord.infra.conf
 
