@@ -2,7 +2,7 @@ definitions:
   model.GetUserResponse:
     properties:
       display_name:
-        example: Scott Lin
+        example: Scott Li
         type: string
       email:
         example: example@mediation-platform.com

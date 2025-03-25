@@ -96,7 +96,7 @@ const docTemplate = `{
             "properties": {
                 "display_name": {
                     "type": "string",
-                    "example": "Scott Lin"
+                    "example": "Scott Li"
                 },
                 "email": {
                     "type": "string",
