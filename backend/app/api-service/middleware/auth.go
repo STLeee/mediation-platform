@@ -20,11 +20,17 @@ func TokenAuthenticationHandler(userRepo coreRepository.UserRepository) gin.Hand
 		// Authenticate user by token
 		user, err := userRepo.GetUserByToken(context.Background(), token)
 		if err != nil {
-			responseError := model.HttpStatusCodeError{StatusCode: http.StatusInternalServerError}
+			responseError := model.HttpStatusCodeError{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 			if authServiceError, ok := err.(coreAuth.AuthServiceError); ok {
 				errType := authServiceError.ErrType
 				if errType == coreAuth.AuthServiceErrorTypeTokenInvalid || errType == coreAuth.AuthServiceErrorTypeUserNotFound {
-					responseError = model.HttpStatusCodeError{StatusCode: http.StatusUnauthorized}
+					responseError = model.HttpStatusCodeError{
+						StatusCode: http.StatusUnauthorized,
+						Err:        err,
+					}
 				}
 			}
 			c.Error(responseError)

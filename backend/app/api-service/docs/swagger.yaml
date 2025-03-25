@@ -52,7 +52,7 @@ paths:
       summary: Readiness check
       tags:
       - health
-  /v1/user/:user_id:
+  /v1/user/{user_id}:
     get:
       description: Get user info
       parameters:

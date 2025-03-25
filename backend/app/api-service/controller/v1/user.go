@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/STLeee/mediation-platform/backend/app/api-service/model"
@@ -18,18 +21,28 @@ func NewUserController() *UserController {
 // @Summary Get user
 // @Description Get user info
 // @Tags user
-// @Router /v1/user/:user_id [get]
+// @Router /v1/user/{user_id} [get]
 // @Security TokenAuth
 // @Param user_id path string true "User ID"
 // @Produce json
 // @Success 200 {object} model.GetUserResponse
 func (hc *UserController) GetUser(c *gin.Context) {
-	userInfo := c.MustGet("user").(*coreModel.User)
-	c.JSON(200, model.GetUserResponse{
-		UserID:      userInfo.UserID,
-		DisplayName: userInfo.DisplayName,
-		Email:       userInfo.Email,
-		PhoneNumber: userInfo.PhoneNumber,
-		PhotoURL:    userInfo.PhotoURL,
+	user := c.MustGet("user").(*coreModel.User)
+	userID := c.Param("user_id")
+	log.Printf("User: %+v", user)
+	log.Printf("User ID: %s", userID)
+	if userID == user.UserID {
+		c.JSON(200, model.GetUserResponse{
+			UserID:      user.UserID,
+			DisplayName: user.DisplayName,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			PhotoURL:    user.PhotoURL,
+		})
+		return
+	}
+	c.Error(model.HttpStatusCodeError{
+		StatusCode: http.StatusForbidden,
+		Message:    "User ID does not match",
 	})
 }

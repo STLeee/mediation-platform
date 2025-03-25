@@ -55,7 +55,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/user/:user_id": {
+        "/v1/user/{user_id}": {
             "get": {
                 "security": [
                     {
