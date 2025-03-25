@@ -12,27 +12,27 @@ import (
 func TestCorsHandler(t *testing.T) {
 	testCases := []struct {
 		method        string
-		excepted_code int
+		expected_code int
 	}{
 		{
 			method:        "GET",
-			excepted_code: 200,
+			expected_code: 200,
 		},
 		{
 			method:        "POST",
-			excepted_code: 200,
+			expected_code: 200,
 		},
 		{
 			method:        "PUT",
-			excepted_code: 200,
+			expected_code: 200,
 		},
 		{
 			method:        "DELETE",
-			excepted_code: 200,
+			expected_code: 200,
 		},
 		{
 			method:        "OPTIONS",
-			excepted_code: 204,
+			expected_code: 204,
 		},
 	}
 
@@ -45,7 +45,7 @@ func TestCorsHandler(t *testing.T) {
 				})
 			}, testCase.method, "/test", nil)
 
-			assert.Equal(t, testCase.excepted_code, httpRecorder.Code)
+			assert.Equal(t, testCase.expected_code, httpRecorder.Code)
 
 			assert.Equal(t, "*", httpRecorder.Header().Get("Access-Control-Allow-Origin"))
 			assert.Equal(t, "GET, POST, PUT, DELETE, OPTIONS", httpRecorder.Header().Get("Access-Control-Allow-Methods"))

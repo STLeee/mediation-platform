@@ -16,27 +16,27 @@ func TestErrorHandler(t *testing.T) {
 	testCases := []struct {
 		name          string
 		err           error
-		excepted_code int
+		expected_code int
 	}{
 		{
 			name:          "no-error",
 			err:           nil,
-			excepted_code: http.StatusOK,
+			expected_code: http.StatusOK,
 		},
 		{
 			name:          "bad-request",
 			err:           model.HttpStatusCodeError{StatusCode: http.StatusBadRequest},
-			excepted_code: http.StatusBadRequest,
+			expected_code: http.StatusBadRequest,
 		},
 		{
 			name:          "internal-server-error",
 			err:           model.HttpStatusCodeError{StatusCode: http.StatusInternalServerError},
-			excepted_code: http.StatusInternalServerError,
+			expected_code: http.StatusInternalServerError,
 		},
 		{
 			name:          "unknown-error",
 			err:           fmt.Errorf("test-error"),
-			excepted_code: http.StatusInternalServerError,
+			expected_code: http.StatusInternalServerError,
 		},
 	}
 
@@ -53,7 +53,7 @@ func TestErrorHandler(t *testing.T) {
 				})
 			}, "GET", "/test", nil)
 
-			assert.Equal(t, testCase.excepted_code, httpRecorder.Code)
+			assert.Equal(t, testCase.expected_code, httpRecorder.Code)
 		})
 	}
 }

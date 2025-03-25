@@ -14,60 +14,60 @@ import (
 )
 
 type TestAuthService struct {
-	AuthenticateByTokenFunc func(ctx context.Context, token string) (uid string, err error)
-	GetUserInfoFunc         func(ctx context.Context, uid string) (*coreModel.UserInfo, error)
+	AuthenticateByTokenFunc   func(ctx context.Context, token string) (uid string, err error)
+	GetUserInfoAndMappingFunc func(ctx context.Context, uid string) (user *coreModel.User, mapping map[string]any, err error)
 }
 
 func (authService *TestAuthService) AuthenticateByToken(ctx context.Context, token string) (uid string, err error) {
 	return authService.AuthenticateByTokenFunc(ctx, token)
 }
 
-func (authService *TestAuthService) GetUserInfo(ctx context.Context, uid string) (*coreModel.UserInfo, error) {
-	return authService.GetUserInfoFunc(ctx, uid)
+func (authService *TestAuthService) GetUserInfoAndMapping(ctx context.Context, uid string) (user *coreModel.User, mapping map[string]any, err error) {
+	return authService.GetUserInfoAndMappingFunc(ctx, uid)
 }
 
 func TestTokenAuthenticationHandler(t *testing.T) {
 	testCases := []struct {
 		name                   string
-		user                   *coreModel.UserInfo
+		user                   *coreModel.User
 		authenticateByTokenErr error
 		getUserInfoFuncErr     error
-		excepted_code          int
+		expected_code          int
 	}{
 		{
 			name:          "no-error",
-			user:          &coreModel.UserInfo{UserID: "test_user_id"},
-			excepted_code: http.StatusOK,
+			user:          &coreModel.User{UserID: "test_user_id"},
+			expected_code: http.StatusOK,
 		},
 		{
 			name:                   "authenticate-by-token/server-error",
 			user:                   nil,
 			authenticateByTokenErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
-			excepted_code:          http.StatusInternalServerError,
+			expected_code:          http.StatusInternalServerError,
 		},
 		{
 			name:                   "authenticate-by-token-error/token-invalid",
 			user:                   nil,
 			authenticateByTokenErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeTokenInvalid},
-			excepted_code:          http.StatusUnauthorized,
+			expected_code:          http.StatusUnauthorized,
 		},
 		{
 			name:                   "authenticate-by-token-error/user-not-found",
 			user:                   nil,
 			authenticateByTokenErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeUserNotFound},
-			excepted_code:          http.StatusUnauthorized,
+			expected_code:          http.StatusUnauthorized,
 		},
 		{
 			name:               "get-user-info-error/server-error",
 			user:               nil,
 			getUserInfoFuncErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
-			excepted_code:      http.StatusInternalServerError,
+			expected_code:      http.StatusInternalServerError,
 		},
 		{
 			name:               "get-user-info-error/user-not-found",
 			user:               nil,
 			getUserInfoFuncErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeUserNotFound},
-			excepted_code:      http.StatusUnauthorized,
+			expected_code:      http.StatusUnauthorized,
 		},
 	}
 
@@ -80,23 +80,23 @@ func TestTokenAuthenticationHandler(t *testing.T) {
 					}
 					return "test_user_id", nil
 				},
-				GetUserInfoFunc: func(ctx context.Context, uid string) (*coreModel.UserInfo, error) {
+				GetUserInfoAndMappingFunc: func(ctx context.Context, uid string) (user *coreModel.User, mapping map[string]any, err error) {
 					if testCase.getUserInfoFuncErr != nil {
-						return nil, testCase.getUserInfoFuncErr
+						return nil, nil, testCase.getUserInfoFuncErr
 					}
-					return testCase.user, nil
+					return testCase.user, map[string]any{"test_auth_uid": "test_user_id"}, nil
 				},
 			}
 			httpRecorder := utils.RegisterAndRecordHttpRequest(func(routeGroup *gin.RouterGroup) {
-				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(testAuthService))
+				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(testAuthService, nil))
 				routeGroup.Handle("GET", "/test", func(c *gin.Context) {
 					c.JSON(200, c.MustGet("user"))
 				})
 			}, "GET", "/test", nil)
 
-			assert.Equal(t, testCase.excepted_code, httpRecorder.Code)
+			assert.Equal(t, testCase.expected_code, httpRecorder.Code)
 			if httpRecorder.Code == 200 {
-				assert.Equal(t, utils.ToJSONString(testCase.user), httpRecorder.Body.String())
+				assert.Equal(t, utils.ConvertToJSONString(testCase.user), httpRecorder.Body.String())
 			}
 		})
 	}

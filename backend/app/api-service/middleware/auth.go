@@ -7,10 +7,11 @@ import (
 
 	"github.com/STLeee/mediation-platform/backend/app/api-service/model"
 	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
+	coreDB "github.com/STLeee/mediation-platform/backend/core/db"
 )
 
 // TokenAuthenticationHandler is a middleware for token authentication
-func TokenAuthenticationHandler(authService coreAuth.BaseAuthService) gin.HandlerFunc {
+func TokenAuthenticationHandler(authService coreAuth.BaseAuthService, mongoDB *coreDB.MongoDB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get token from header
 		token := c.GetHeader("Authorization")
@@ -31,7 +32,7 @@ func TokenAuthenticationHandler(authService coreAuth.BaseAuthService) gin.Handle
 		}
 
 		// Get user info from auth service
-		userInfo, err := authService.GetUserInfo(c, uid)
+		userInfo, _, err := authService.GetUserInfoAndMapping(c, uid)
 		if err != nil {
 			responseError := model.HttpStatusCodeError{StatusCode: http.StatusInternalServerError}
 			if authServiceError, ok := err.(coreAuth.AuthServiceError); ok {

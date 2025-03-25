@@ -24,7 +24,7 @@ func NewUserController() *UserController {
 // @Produce json
 // @Success 200 {object} model.GetUserResponse
 func (hc *UserController) GetUser(c *gin.Context) {
-	userInfo := c.MustGet("user").(*coreModel.UserInfo)
+	userInfo := c.MustGet("user").(*coreModel.User)
 	c.JSON(200, model.GetUserResponse{
 		UserID:      userInfo.UserID,
 		DisplayName: userInfo.DisplayName,

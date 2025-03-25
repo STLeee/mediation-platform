@@ -13,19 +13,19 @@ import (
 func TestGetUser(t *testing.T) {
 	testCases := []struct {
 		name     string
-		user     *coreModel.UserInfo
-		excepted *model.GetUserResponse
+		user     *coreModel.User
+		expected *model.GetUserResponse
 	}{
 		{
 			name: "test_user_id",
-			user: &coreModel.UserInfo{
+			user: &coreModel.User{
 				UserID:      "test_user_id",
 				DisplayName: "test_display_name",
 				Email:       "test_email",
 				PhoneNumber: "test_phone_number",
 				PhotoURL:    "test_photo_url",
 			},
-			excepted: &model.GetUserResponse{
+			expected: &model.GetUserResponse{
 				UserID:      "test_user_id",
 				DisplayName: "test_display_name",
 				Email:       "test_email",
@@ -47,9 +47,9 @@ func TestGetUser(t *testing.T) {
 				},
 			)
 
-			if testCase.excepted != nil {
+			if testCase.expected != nil {
 				assert.Equal(t, 200, httpRecorder.Code)
-				assert.Equal(t, utils.ToJSONString(testCase.excepted), httpRecorder.Body.String())
+				assert.Equal(t, utils.ConvertToJSONString(testCase.expected), httpRecorder.Body.String())
 			}
 		})
 	}

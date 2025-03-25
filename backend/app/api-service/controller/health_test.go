@@ -19,7 +19,7 @@ func TestHealthControllerLiveness(t *testing.T) {
 
 	assert.Equal(t, 200, httpRecorder.Code)
 	expectedResponse := model.MessageResponse{Message: "ok"}
-	assert.Equal(t, utils.ToJSONString(expectedResponse), httpRecorder.Body.String())
+	assert.Equal(t, utils.ConvertToJSONString(expectedResponse), httpRecorder.Body.String())
 }
 func TestHealthControllerReadiness(t *testing.T) {
 	routerRegisterFunc := func(r *gin.RouterGroup) {
@@ -30,5 +30,5 @@ func TestHealthControllerReadiness(t *testing.T) {
 
 	assert.Equal(t, 200, httpRecorder.Code)
 	expectedResponse := model.MessageResponse{Message: "ok"}
-	assert.Equal(t, utils.ToJSONString(expectedResponse), httpRecorder.Body.String())
+	assert.Equal(t, utils.ConvertToJSONString(expectedResponse), httpRecorder.Body.String())
 }
