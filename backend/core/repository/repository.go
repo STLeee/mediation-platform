@@ -93,7 +93,7 @@ type MongoDBRepository struct {
 func NewMongoDBRepository(mongoDB *db.MongoDB, cfg *MongoDBRepositoryConfig) *MongoDBRepository {
 	return &MongoDBRepository{
 		mongoDB:    mongoDB,
-		collection: mongoDB.GetCollection(cfg.Database, cfg.Collection),
+		collection: mongoDB.Database(cfg.Database).Collection(cfg.Collection),
 		cfg:        cfg,
 	}
 }

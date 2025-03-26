@@ -101,7 +101,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	defer mongoDB.Close(context.Background())
+	defer mongoDB.Close()
 
 	userMongoDBRepository = NewUserMongoDBRepository(firebaseAuth, mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUser])
 
