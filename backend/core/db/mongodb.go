@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/STLeee/mediation-platform/backend/core/utils"
@@ -60,8 +59,6 @@ type MongoDB struct {
 
 // NewMongoDB creates a new MongoDB
 func NewMongoDB(ctx context.Context, cfg *MongoDBConfig) (*MongoDB, error) {
-	fmt.Printf("MongoDBConfig: %+v\n", cfg)
-
 	// Set client options
 	opt := options.Client().ApplyURI(cfg.URI)
 	if cfg.TLS {
