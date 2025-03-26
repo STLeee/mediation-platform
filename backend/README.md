@@ -6,6 +6,8 @@
     - [Run Backend API Service](#run-backend-api-service)
     - [API Document](#api-document)
     - [Create Token for Local Testing](#create-token-for-local-testing)
+    - [Issues](#issues)
+      - [permissions on /data/tls/mongodb-test-keyfile are too open](#permissions-on-datatlsmongodb-test-keyfile-are-too-open)
   - [Testing](#testing)
 
 ---
@@ -38,6 +40,15 @@ make create-token UID=${FIREBASE_UID}
 ```
 
 `FIREBASE_UID`: Please refer to [firebase account data](./firebase/emulator_data/auth_export/accounts.json)
+
+### Issues
+
+#### permissions on /data/tls/mongodb-test-keyfile are too open
+
+```bash
+cd mongodb/tls
+chmod 600 mongodb-test-keyfile
+```
 
 ## Testing
 
