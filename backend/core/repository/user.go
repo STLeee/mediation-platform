@@ -11,14 +11,14 @@ import (
 
 // UserRepository is an interface for user repository
 type UserRepository interface {
-	GetUserByToken(ctx context.Context, token string) (*model.User, error)
+	CreateUser(ctx context.Context, user *model.User) (string, error)
+	GetUserByAuthUID(ctx context.Context, authName auth.AuthServiceName, authUID string) (*model.User, error)
 	GetUserByID(ctx context.Context, userID string) (*model.User, error)
 }
 
 // UserMongoDBRepository is a MongoDB repository for user
 type UserMongoDBRepository struct {
 	MongoDBRepository
-	authService auth.BaseAuthService
 }
 
 // NewUserMongoDBRepository creates a new UserMongoDBRepository
@@ -26,53 +26,6 @@ func NewUserMongoDBRepository(mongoDB *db.MongoDB, cfg *MongoDBRepositoryConfig)
 	return &UserMongoDBRepository{
 		MongoDBRepository: *NewMongoDBRepository(mongoDB, cfg),
 	}
-}
-
-// SetAuthService sets an auth service
-func (repo *UserMongoDBRepository) SetAuthService(authService auth.BaseAuthService) {
-	repo.authService = authService
-}
-
-// GetUserByToken get a user by token
-func (repo *UserMongoDBRepository) GetUserByToken(ctx context.Context, token string) (*model.User, error) {
-	if repo.authService == nil {
-		return nil, RepositoryError{
-			ErrType: RepositoryErrorTypeConfigError,
-			Message: "auth service is not set",
-		}
-	}
-
-	// Get user ID from auth service
-	authUID, err := repo.authService.AuthenticateByToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get user data from auth service
-	userFromAuth, mapping, err := repo.authService.GetUserInfoAndMapping(ctx, authUID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get user from MongoDB
-	user, err := repo.GetUserByFilter(ctx, mapping)
-	if err != nil {
-		// If user not found, create a new user
-		if _, ok := err.(RepositoryError); ok {
-			userID, err := repo.CreateUser(ctx, userFromAuth)
-			if err != nil {
-				return nil, err
-			}
-			user, err = repo.GetUserByID(ctx, userID)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
-	}
-
-	return user, nil
 }
 
 // CreateUser create a user
@@ -91,21 +44,33 @@ func (repo *UserMongoDBRepository) CreateUser(ctx context.Context, user *model.U
 	return repo.InsertOne(ctx, userInMongoDB)
 }
 
-// GetUserByID get a user by user ID
-func (repo *UserMongoDBRepository) GetUserByID(ctx context.Context, userID string) (*model.User, error) {
-	// Find by ID
+// GetUserByAuthUID get a user by auth UID
+func (repo *UserMongoDBRepository) GetUserByAuthUID(ctx context.Context, authName auth.AuthServiceName, authUID string) (*model.User, error) {
+	authUIDFilter := map[string]any{}
+	switch authName {
+	case auth.AuthServiceNameFirebase:
+		authUIDFilter["firebase_uid"] = authUID
+	default:
+		return nil, RepositoryError{
+			ErrType: RepositoryErrorTypeServerError,
+			Message: "unsupported auth service",
+		}
+	}
+
+	// Find by filter
 	userInMongoDB := &model.UserInMongoDB{}
-	err := repo.FindByID(ctx, userID, userInMongoDB)
+	err := repo.FindOneByFilter(ctx, authUIDFilter, userInMongoDB)
 	if err != nil {
 		return nil, err
 	}
 	return &userInMongoDB.User, nil
 }
 
-func (repo *UserMongoDBRepository) GetUserByFilter(ctx context.Context, filter map[string]any) (*model.User, error) {
-	// Find by filter
+// GetUserByID get a user by user ID
+func (repo *UserMongoDBRepository) GetUserByID(ctx context.Context, userID string) (*model.User, error) {
+	// Find by ID
 	userInMongoDB := &model.UserInMongoDB{}
-	err := repo.FindOneByFilter(ctx, filter, userInMongoDB)
+	err := repo.FindByID(ctx, userID, userInMongoDB)
 	if err != nil {
 		return nil, err
 	}

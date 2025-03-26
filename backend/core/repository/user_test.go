@@ -44,16 +44,6 @@ var localUsers = []*model.User{
 		PhotoURL:    "",
 		Disabled:    true,
 	},
-	{
-		// Not in db
-		UserID:      "",
-		FirebaseUID: "kEnwA5bzGJrkEAnO2atgv6Fbbc2X",
-		DisplayName: "TestingUser4",
-		Email:       "testing4@mediation-platform.com",
-		PhoneNumber: "",
-		PhotoURL:    "",
-		Disabled:    false,
-	},
 }
 
 func assertUserWithMap(t *testing.T, expectedMap map[string]any, actualUser *model.User) {
@@ -102,62 +92,43 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestGetUserByToken(t *testing.T) {
+func TestGetUserByAuthUID(t *testing.T) {
 	ctx := context.Background()
-
-	// Connect to local Firebase
-	var err error
-	firebaseAuth, err := auth.NewFirebaseAuth(context.Background(), auth.LocalFirebaseAuthConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	// Test cases
 	testCases := []struct {
 		name         string
-		authService  auth.BaseAuthService
-		token        string
+		authName     auth.AuthServiceName
+		authUID      string
 		expectedUser *model.User
 		expectedErr  error
 		isNotInDB    bool
 	}{
 		{
-			name: "auth-service-not-set",
+			name:     "unsupported-auth-service",
+			authName: auth.AuthServiceName("unsupported"),
+			authUID:  "unsupported-uid",
 			expectedErr: RepositoryError{
-				ErrType: RepositoryErrorTypeConfigError,
-				Message: "auth service is not set",
+				ErrType: RepositoryErrorTypeServerError,
+				Message: "unsupported auth service",
 			},
 		},
 		{
 			name:         "user-found",
-			authService:  firebaseAuth,
-			token:        utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, localUsers[0].FirebaseUID),
+			authName:     auth.AuthServiceNameFirebase,
+			authUID:      localUsers[0].FirebaseUID,
 			expectedUser: localUsers[0],
 		},
 		{
-			name:        "invalid-token",
-			authService: firebaseAuth,
-			token:       "invalid-token",
-			expectedErr: auth.AuthServiceError{ErrType: auth.AuthServiceErrorTypeTokenInvalid},
-		},
-		{
-			name:        "user-not-found-from-auth",
-			authService: firebaseAuth,
-			token:       utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, "not-found-auth-uid"),
+			name:        "user-not-found",
+			authName:    auth.AuthServiceNameFirebase,
+			authUID:     "not-found-uid",
 			expectedErr: auth.AuthServiceError{ErrType: auth.AuthServiceErrorTypeUserNotFound},
-		},
-		{
-			name:         "user-not-in-db",
-			authService:  firebaseAuth,
-			token:        utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, localUsers[3].FirebaseUID),
-			expectedUser: localUsers[3],
-			isNotInDB:    true,
 		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			userMongoDBRepository.SetAuthService(testCase.authService)
-			user, err := userMongoDBRepository.GetUserByToken(ctx, testCase.token)
+			user, err := userMongoDBRepository.GetUserByAuthUID(ctx, testCase.authName, testCase.authUID)
 			if testCase.expectedUser != nil {
 				if err != nil {
 					t.Fatal(err)

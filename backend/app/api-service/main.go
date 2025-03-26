@@ -48,11 +48,11 @@ func main() {
 	}
 
 	// Init repositories
-	repositories := initMongoDBRepositories(authService, mongoDB, cfg)
+	repositories := initMongoDBRepositories(mongoDB, cfg)
 
 	// Setup server
 	engine := gin.Default()
-	registerAPIRouters(engine, repositories)
+	registerAPIRouters(engine, authService, repositories)
 
 	// Swagger
 	if cfg.Service.Environment == coreService.Testing {
@@ -100,19 +100,18 @@ func initMongoDB(cfg *config.Config) (*coreDB.MongoDB, error) {
 }
 
 // Init MongoDB repositories
-func initMongoDBRepositories(authService coreAuth.BaseAuthService, mongoDB *coreDB.MongoDB, cfg *config.Config) map[coreRepository.RepositoryName]any {
+func initMongoDBRepositories(mongoDB *coreDB.MongoDB, cfg *config.Config) map[coreRepository.RepositoryName]any {
 	repositories := make(map[coreRepository.RepositoryName]any)
 
 	// Init user repository
 	userRepo := coreRepository.NewUserMongoDBRepository(mongoDB, cfg.Repositories[coreRepository.RepositoryNameUser])
-	userRepo.SetAuthService(authService)
 	repositories[coreRepository.RepositoryNameUser] = userRepo
 
 	return repositories
 }
 
 // Register API routers
-func registerAPIRouters(engine *gin.Engine, repositories map[coreRepository.RepositoryName]any) {
+func registerAPIRouters(engine *gin.Engine, authService coreAuth.BaseAuthService, repositories map[coreRepository.RepositoryName]any) {
 	userRepo, _ := repositories[coreRepository.RepositoryNameUser].(*coreRepository.UserMongoDBRepository)
 
 	// Register middleware
@@ -128,7 +127,7 @@ func registerAPIRouters(engine *gin.Engine, repositories map[coreRepository.Repo
 
 	// Register v1 router
 	v1RouterGroup := apiRouterGroup.Group("/v1")
-	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(userRepo))
+	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(authService, userRepo))
 
 	// Register v1 user router
 	userRouterGroup := v1RouterGroup.Group("/user")

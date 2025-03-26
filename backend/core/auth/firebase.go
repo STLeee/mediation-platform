@@ -71,6 +71,11 @@ func NewFirebaseAuth(ctx context.Context, cfg *FirebaseAuthConfig) (*FirebaseAut
 	return &FirebaseAuth{app, authClient, cfg}, nil
 }
 
+// GetName returns the authentication service name
+func (firebaseAuth *FirebaseAuth) GetName() AuthServiceName {
+	return AuthServiceNameFirebase
+}
+
 // AuthenticateByToken authenticates a user by token
 func (firebaseAuth *FirebaseAuth) AuthenticateByToken(ctx context.Context, token string) (uid string, err error) {
 	verifiedToken, err := firebaseAuth.authClient.VerifyIDToken(ctx, token)
@@ -89,14 +94,14 @@ func (firebaseAuth *FirebaseAuth) AuthenticateByToken(ctx context.Context, token
 	return verifiedToken.UID, nil
 }
 
-// GetUserInfoAndMapping gets user info and mapping
-func (firebaseAuth *FirebaseAuth) GetUserInfoAndMapping(ctx context.Context, uid string) (user *model.User, mapping map[string]any, err error) {
+// GetUserInfo gets user info
+func (firebaseAuth *FirebaseAuth) GetUserInfo(ctx context.Context, uid string) (user *model.User, err error) {
 	userRecord, err := firebaseAuth.authClient.GetUser(ctx, uid)
 	if err != nil {
 		if firebaseErrorutils.IsNotFound(err) {
-			return nil, nil, AuthServiceError{ErrType: AuthServiceErrorTypeUserNotFound}
+			return nil, AuthServiceError{ErrType: AuthServiceErrorTypeUserNotFound}
 		}
-		return nil, nil, AuthServiceError{
+		return nil, AuthServiceError{
 			ErrType: AuthServiceErrorTypeServerError,
 			Message: "failed to get user info",
 			Err:     err,
@@ -110,8 +115,5 @@ func (firebaseAuth *FirebaseAuth) GetUserInfoAndMapping(ctx context.Context, uid
 		PhotoURL:    userRecord.PhotoURL,
 		Disabled:    userRecord.Disabled,
 	}
-	mapping = map[string]any{
-		"firebase_uid": userRecord.UID,
-	}
-	return user, mapping, nil
+	return user, nil
 }

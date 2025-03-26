@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -14,73 +15,192 @@ import (
 	"github.com/STLeee/mediation-platform/backend/core/utils"
 )
 
-type TestUserRepository struct {
-	GetUserByTokenFunc func(ctx context.Context, token string) (*coreModel.User, error)
+type MockFirebaseAuthService struct {
+	AuthenticateByTokenFunc func(ctx context.Context, token string) (uid string, err error)
+	GetUserInfoFunc         func(ctx context.Context, uid string) (user *coreModel.User, err error)
 }
 
-func (repo *TestUserRepository) GetUserByToken(ctx context.Context, token string) (*coreModel.User, error) {
-	return repo.GetUserByTokenFunc(ctx, token)
+func (auth *MockFirebaseAuthService) GetName() coreAuth.AuthServiceName {
+	return coreAuth.AuthServiceNameFirebase
 }
 
-func (repo *TestUserRepository) GetUserByID(ctx context.Context, userID string) (*coreModel.User, error) {
-	return nil, nil
+func (auth *MockFirebaseAuthService) AuthenticateByToken(ctx context.Context, token string) (uid string, err error) {
+	return auth.AuthenticateByTokenFunc(ctx, token)
+}
+
+func (auth *MockFirebaseAuthService) GetUserInfo(ctx context.Context, uid string) (user *coreModel.User, err error) {
+	return auth.GetUserInfoFunc(ctx, uid)
+}
+
+type MockUserRepository struct {
+	CreateUserFunc       func(ctx context.Context, user *coreModel.User) (string, error)
+	GetUserByAuthUIDFunc func(ctx context.Context, authName coreAuth.AuthServiceName, authUID string) (*coreModel.User, error)
+	GetUserByIDFunc      func(ctx context.Context, userID string) (*coreModel.User, error)
+}
+
+func (repo *MockUserRepository) CreateUser(ctx context.Context, user *coreModel.User) (string, error) {
+	return repo.CreateUserFunc(ctx, user)
+}
+
+func (repo *MockUserRepository) GetUserByAuthUID(ctx context.Context, authName coreAuth.AuthServiceName, authUID string) (*coreModel.User, error) {
+	return repo.GetUserByAuthUIDFunc(ctx, authName, authUID)
+}
+
+func (repo *MockUserRepository) GetUserByID(ctx context.Context, userID string) (*coreModel.User, error) {
+	return repo.GetUserByIDFunc(ctx, userID)
+}
+
+var mockFirebaseUser = &coreModel.User{
+	UserID:      "",
+	FirebaseUID: "test-firebase-uid",
+	DisplayName: "Test User",
+	Email:       "test-user@mediation-platform.com",
+	PhoneNumber: "",
+	PhotoURL:    "",
+	Disabled:    false,
+}
+
+var mockUserInDB = &coreModel.User{
+	UserID:      "test-user-id",
+	FirebaseUID: "test-firebase-uid",
+	DisplayName: "Test User",
+	Email:       "test-user@mediation-platform.com",
+	PhoneNumber: "",
+	PhotoURL:    "",
+	Disabled:    false,
+	CreatedAt:   time.Now(),
+	UpdatedAt:   time.Now(),
+	LastLoginAt: time.Now(),
 }
 
 func TestTokenAuthenticationHandler(t *testing.T) {
 	testCases := []struct {
-		name           string
-		user           *coreModel.User
-		getUserByIDErr error
-		expected_code  int
+		name                       string
+		token                      string
+		authUID                    string
+		authUser                   *coreModel.User
+		dbUser                     *coreModel.User
+		authenticateByTokenFuncErr error
+		getUserByAuthUIDFuncErr    error
+		getUserInfoFuncErr         error
+		createUserFuncErr          error
+		getUserByIDErr             error
+		expectedStatusCode         int
 	}{
 		{
-			name:          "no-error",
-			user:          &coreModel.User{UserID: "test_user_id"},
-			expected_code: http.StatusOK,
+			name:               "success",
+			token:              "test-token",
+			authUID:            mockFirebaseUser.FirebaseUID,
+			authUser:           mockFirebaseUser,
+			dbUser:             mockUserInDB,
+			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:           "auth/server-error",
-			user:           nil,
-			getUserByIDErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
-			expected_code:  http.StatusInternalServerError,
+			name:               "empty-token",
+			token:              "",
+			expectedStatusCode: http.StatusUnauthorized,
 		},
 		{
-			name:           "auth/token-invalid",
-			user:           nil,
-			getUserByIDErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeTokenInvalid},
-			expected_code:  http.StatusUnauthorized,
+			name:                       "auth/invalid-token",
+			token:                      "invalid-token",
+			authenticateByTokenFuncErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeTokenInvalid},
+			expectedStatusCode:         http.StatusUnauthorized,
 		},
 		{
-			name:           "auth/user-not-found",
-			user:           nil,
-			getUserByIDErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeUserNotFound},
-			expected_code:  http.StatusUnauthorized,
+			name:                       "auth/user-not-found",
+			token:                      "test-token",
+			authenticateByTokenFuncErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeUserNotFound},
+			expectedStatusCode:         http.StatusUnauthorized,
 		},
 		{
-			name:           "db/server-error",
-			user:           nil,
-			getUserByIDErr: coreRepository.RepositoryError{ErrType: coreRepository.RepositoryErrorTypeServerError},
-			expected_code:  http.StatusInternalServerError,
+			name:                       "auth/unknown-error",
+			token:                      "test-token",
+			authenticateByTokenFuncErr: coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
+			expectedStatusCode:         http.StatusInternalServerError,
+		},
+		{
+			name:                    "db/get-user-by-auth-uid-error",
+			token:                   "test-token",
+			authUID:                 mockFirebaseUser.FirebaseUID,
+			authUser:                mockFirebaseUser,
+			getUserByAuthUIDFuncErr: coreRepository.RepositoryError{ErrType: coreRepository.RepositoryErrorTypeServerError},
+			expectedStatusCode:      http.StatusInternalServerError,
+		},
+		{
+			name:                    "auth/get-user-info-error",
+			token:                   "test-token",
+			authUID:                 mockFirebaseUser.FirebaseUID,
+			getUserByAuthUIDFuncErr: coreRepository.RepositoryError{ErrType: coreRepository.RepositoryErrorTypeRecordNotFound},
+			getUserInfoFuncErr:      coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
+			expectedStatusCode:      http.StatusInternalServerError,
+		},
+		{
+			name:                    "db/create-user-error",
+			token:                   "test-token",
+			authUID:                 mockFirebaseUser.FirebaseUID,
+			authUser:                mockFirebaseUser,
+			getUserByAuthUIDFuncErr: coreRepository.RepositoryError{ErrType: coreRepository.RepositoryErrorTypeRecordNotFound},
+			createUserFuncErr:       coreAuth.AuthServiceError{ErrType: coreAuth.AuthServiceErrorTypeServerError},
+			expectedStatusCode:      http.StatusInternalServerError,
+		},
+		{
+			name:                    "db/get-user-by-id-error",
+			token:                   "test-token",
+			authUID:                 mockFirebaseUser.FirebaseUID,
+			authUser:                mockFirebaseUser,
+			dbUser:                  mockUserInDB,
+			getUserByAuthUIDFuncErr: coreRepository.RepositoryError{ErrType: coreRepository.RepositoryErrorTypeRecordNotFound},
+			getUserByIDErr:          coreRepository.RepositoryError{ErrType: coreRepository.RepositoryErrorTypeServerError},
+			expectedStatusCode:      http.StatusInternalServerError,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			testUserRepo := &TestUserRepository{
-				GetUserByTokenFunc: func(ctx context.Context, token string) (*coreModel.User, error) {
-					return testCase.user, testCase.getUserByIDErr
+			mockFirebaseAuthService := &MockFirebaseAuthService{
+				AuthenticateByTokenFunc: func(ctx context.Context, token string) (uid string, err error) {
+					assert.Equal(t, testCase.token, token)
+					return testCase.authUID, testCase.authenticateByTokenFuncErr
+				},
+				GetUserInfoFunc: func(ctx context.Context, uid string) (user *coreModel.User, err error) {
+					assert.Equal(t, testCase.authUID, uid)
+					return testCase.authUser, testCase.getUserInfoFuncErr
 				},
 			}
+			mockUserRepo := &MockUserRepository{
+				CreateUserFunc: func(ctx context.Context, user *coreModel.User) (string, error) {
+					assert.Equal(t, testCase.authUser, user)
+					userID := ""
+					if testCase.dbUser != nil {
+						userID = testCase.dbUser.UserID
+					}
+					return userID, testCase.createUserFuncErr
+				},
+				GetUserByAuthUIDFunc: func(ctx context.Context, authName coreAuth.AuthServiceName, authUID string) (*coreModel.User, error) {
+					assert.Equal(t, coreAuth.AuthServiceNameFirebase, authName)
+					assert.Equal(t, testCase.authUID, authUID)
+					return testCase.dbUser, testCase.getUserByAuthUIDFuncErr
+				},
+				GetUserByIDFunc: func(ctx context.Context, userID string) (*coreModel.User, error) {
+					assert.Equal(t, testCase.dbUser.UserID, userID)
+					return testCase.dbUser, testCase.getUserByIDErr
+				},
+			}
+
 			httpRecorder := utils.RegisterAndRecordHttpRequest(func(routeGroup *gin.RouterGroup) {
-				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(testUserRepo))
+				routeGroup.Use(func(ctx *gin.Context) {
+					ctx.Request.Header.Set("Authorization", testCase.token)
+					ctx.Next()
+				})
+				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(mockFirebaseAuthService, mockUserRepo))
 				routeGroup.Handle("GET", "/test", func(c *gin.Context) {
 					c.JSON(200, c.MustGet("user"))
 				})
 			}, "GET", "/test", nil)
 
-			assert.Equal(t, testCase.expected_code, httpRecorder.Code)
+			assert.Equal(t, testCase.expectedStatusCode, httpRecorder.Code)
 			if httpRecorder.Code == 200 {
-				assert.Equal(t, utils.ConvertToJSONString(testCase.user), httpRecorder.Body.String())
+				assert.Equal(t, utils.ConvertToJSONString(testCase.dbUser), httpRecorder.Body.String())
 			}
 		})
 	}
