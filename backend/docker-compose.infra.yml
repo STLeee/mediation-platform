@@ -1,6 +1,6 @@
 services:
   mongodb:
-    image: mongo:8.0.4
+    image: mongo:8.0.6
     container_name: mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
@@ -57,3 +57,16 @@ services:
     ports:
       - 8081:8081
     restart: always
+
+  redis:
+    image: redis:7.4.2
+    container_name: redis
+    ports:
+      - 6379:6379
+    restart: always
+    healthcheck:
+      test: echo 'PING' | redis-cli -h localhost -p 6379
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

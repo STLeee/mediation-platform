@@ -17,7 +17,8 @@
 - Golang: `1.24.1`
 - Swagger fo Golang
   - https://github.com/swaggo/swag
-- MongoDB
+- MongoDB: `8.0.4`
+- Redis: `7.4.2`
 
 ## Local Deployment
 
