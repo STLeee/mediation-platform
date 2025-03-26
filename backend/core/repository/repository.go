@@ -181,7 +181,7 @@ func (repo *MongoDBRepository) UpdateByID(ctx context.Context, id string, data m
 	}
 
 	// Set update data
-	data[model.UPDATED_TIMESTAMP_FIELD] = time.Now()
+	data[model.UpdatedTimestampFieldName] = time.Now()
 	update := bson.M{"$set": data}
 
 	// Update one
