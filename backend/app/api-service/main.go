@@ -104,7 +104,8 @@ func initMongoDBRepositories(authService coreAuth.BaseAuthService, mongoDB *core
 	repositories := make(map[coreRepository.RepositoryName]any)
 
 	// Init user repository
-	userRepo := coreRepository.NewUserMongoDBRepository(authService, mongoDB, cfg.Repositories[coreRepository.RepositoryNameUser])
+	userRepo := coreRepository.NewUserMongoDBRepository(mongoDB, cfg.Repositories[coreRepository.RepositoryNameUser])
+	userRepo.SetAuthService(authService)
 	repositories[coreRepository.RepositoryNameUser] = userRepo
 
 	return repositories

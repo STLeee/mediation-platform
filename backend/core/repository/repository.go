@@ -25,6 +25,7 @@ type RepositoryErrorType string
 
 const (
 	RepositoryErrorTypeServerError    RepositoryErrorType = "server_error"
+	RepositoryErrorTypeConfigError    RepositoryErrorType = "config_error"
 	RepositoryErrorTypeRecordNotFound RepositoryErrorType = "record_not_found"
 	RepositoryErrorTypeInvalidID      RepositoryErrorType = "invalid_id"
 	RepositoryErrorTypeInvalidData    RepositoryErrorType = "invalid_data"
@@ -32,6 +33,7 @@ const (
 
 var RepositoryErrorDefaultMessages = map[RepositoryErrorType]string{
 	RepositoryErrorTypeServerError:    "server error",
+	RepositoryErrorTypeConfigError:    "config error",
 	RepositoryErrorTypeRecordNotFound: "record not found",
 	RepositoryErrorTypeInvalidID:      "invalid ID",
 	RepositoryErrorTypeInvalidData:    "invalid data",

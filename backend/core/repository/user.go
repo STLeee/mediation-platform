@@ -17,20 +17,31 @@ type UserRepository interface {
 
 // UserMongoDBRepository is a MongoDB repository for user
 type UserMongoDBRepository struct {
-	authService auth.BaseAuthService
 	MongoDBRepository
+	authService auth.BaseAuthService
 }
 
 // NewUserMongoDBRepository creates a new UserMongoDBRepository
-func NewUserMongoDBRepository(authService auth.BaseAuthService, mongoDB *db.MongoDB, cfg *MongoDBRepositoryConfig) *UserMongoDBRepository {
+func NewUserMongoDBRepository(mongoDB *db.MongoDB, cfg *MongoDBRepositoryConfig) *UserMongoDBRepository {
 	return &UserMongoDBRepository{
-		authService:       authService,
 		MongoDBRepository: *NewMongoDBRepository(mongoDB, cfg),
 	}
 }
 
+// SetAuthService sets an auth service
+func (repo *UserMongoDBRepository) SetAuthService(authService auth.BaseAuthService) {
+	repo.authService = authService
+}
+
 // GetUserByToken get a user by token
 func (repo *UserMongoDBRepository) GetUserByToken(ctx context.Context, token string) (*model.User, error) {
+	if repo.authService == nil {
+		return nil, RepositoryError{
+			ErrType: RepositoryErrorTypeConfigError,
+			Message: "auth service is not set",
+		}
+	}
+
 	// Get user ID from auth service
 	authUID, err := repo.authService.AuthenticateByToken(ctx, token)
 	if err != nil {
