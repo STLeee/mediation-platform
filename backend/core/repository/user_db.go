@@ -9,8 +9,8 @@ import (
 	"github.com/STLeee/mediation-platform/backend/core/model"
 )
 
-// UserRepository is an interface for user repository
-type UserRepository interface {
+// UserDBRepository is an interface for user repository in database
+type UserDBRepository interface {
 	CreateUser(ctx context.Context, user *model.User) (string, error)
 	GetUserByAuthUID(ctx context.Context, authName auth.AuthServiceName, authUID string) (*model.User, error)
 	GetUserByID(ctx context.Context, userID string) (*model.User, error)

@@ -14,7 +14,7 @@ import (
 )
 
 var LocalMongoDBRepositoryConfigs = MongoDBRepositoryConfigs{
-	RepositoryNameUser: {
+	RepositoryNameUserDB: {
 		Database:   "mediation-platform",
 		Collection: "user",
 	},
@@ -72,7 +72,7 @@ func (e RepositoryError) Unwrap() error {
 type RepositoryName string
 
 const (
-	RepositoryNameUser RepositoryName = "user"
+	RepositoryNameUserDB RepositoryName = "user_db"
 )
 
 // MongoDBRepositoryConfigs struct for MongoDB repository configs

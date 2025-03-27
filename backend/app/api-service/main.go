@@ -104,15 +104,15 @@ func initMongoDBRepositories(mongoDB *coreDB.MongoDB, cfg *config.Config) map[co
 	repositories := make(map[coreRepository.RepositoryName]any)
 
 	// Init user repository
-	userRepo := coreRepository.NewUserMongoDBRepository(mongoDB, cfg.Repositories[coreRepository.RepositoryNameUser])
-	repositories[coreRepository.RepositoryNameUser] = userRepo
+	userDBRepo := coreRepository.NewUserMongoDBRepository(mongoDB, cfg.Repositories[coreRepository.RepositoryNameUserDB])
+	repositories[coreRepository.RepositoryNameUserDB] = userDBRepo
 
 	return repositories
 }
 
 // Register API routers
 func registerAPIRouters(engine *gin.Engine, authService coreAuth.BaseAuthService, repositories map[coreRepository.RepositoryName]any) {
-	userRepo, _ := repositories[coreRepository.RepositoryNameUser].(*coreRepository.UserMongoDBRepository)
+	userDBRepo, _ := repositories[coreRepository.RepositoryNameUserDB].(*coreRepository.UserMongoDBRepository)
 
 	// Register middleware
 	engine.Use(middleware.CorsHandler())
@@ -127,7 +127,7 @@ func registerAPIRouters(engine *gin.Engine, authService coreAuth.BaseAuthService
 
 	// Register v1 router
 	v1RouterGroup := apiRouterGroup.Group("/v1")
-	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(authService, userRepo))
+	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(authService, userDBRepo))
 
 	// Register v1 user router
 	userRouterGroup := v1RouterGroup.Group("/user")

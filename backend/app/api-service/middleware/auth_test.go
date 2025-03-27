@@ -32,21 +32,21 @@ func (auth *MockFirebaseAuthService) GetUserInfo(ctx context.Context, uid string
 	return auth.GetUserInfoFunc(ctx, uid)
 }
 
-type MockUserRepository struct {
+type MockUserDBRepository struct {
 	CreateUserFunc       func(ctx context.Context, user *coreModel.User) (string, error)
 	GetUserByAuthUIDFunc func(ctx context.Context, authName coreAuth.AuthServiceName, authUID string) (*coreModel.User, error)
 	GetUserByIDFunc      func(ctx context.Context, userID string) (*coreModel.User, error)
 }
 
-func (repo *MockUserRepository) CreateUser(ctx context.Context, user *coreModel.User) (string, error) {
+func (repo *MockUserDBRepository) CreateUser(ctx context.Context, user *coreModel.User) (string, error) {
 	return repo.CreateUserFunc(ctx, user)
 }
 
-func (repo *MockUserRepository) GetUserByAuthUID(ctx context.Context, authName coreAuth.AuthServiceName, authUID string) (*coreModel.User, error) {
+func (repo *MockUserDBRepository) GetUserByAuthUID(ctx context.Context, authName coreAuth.AuthServiceName, authUID string) (*coreModel.User, error) {
 	return repo.GetUserByAuthUIDFunc(ctx, authName, authUID)
 }
 
-func (repo *MockUserRepository) GetUserByID(ctx context.Context, userID string) (*coreModel.User, error) {
+func (repo *MockUserDBRepository) GetUserByID(ctx context.Context, userID string) (*coreModel.User, error) {
 	return repo.GetUserByIDFunc(ctx, userID)
 }
 
@@ -167,7 +167,7 @@ func TestTokenAuthenticationHandler(t *testing.T) {
 					return testCase.authUser, testCase.getUserInfoFuncErr
 				},
 			}
-			mockUserRepo := &MockUserRepository{
+			mockUserDBRepo := &MockUserDBRepository{
 				CreateUserFunc: func(ctx context.Context, user *coreModel.User) (string, error) {
 					assert.Equal(t, testCase.authUser, user)
 					userID := ""
@@ -192,7 +192,7 @@ func TestTokenAuthenticationHandler(t *testing.T) {
 					ctx.Request.Header.Set("Authorization", "Bearer "+testCase.token)
 					ctx.Next()
 				})
-				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(mockFirebaseAuthService, mockUserRepo))
+				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(mockFirebaseAuthService, mockUserDBRepo))
 				routeGroup.Handle("GET", "/test", func(c *gin.Context) {
 					if testCase.token == "" {
 						c.JSON(http.StatusUnauthorized, nil)

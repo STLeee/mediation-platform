@@ -86,7 +86,7 @@ func TestMain(m *testing.M) {
 	}
 	defer mongoDB.Close()
 
-	userMongoDBRepository = NewUserMongoDBRepository(mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUser])
+	userMongoDBRepository = NewUserMongoDBRepository(mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUserDB])
 
 	// Run tests
 	os.Exit(m.Run())
@@ -192,8 +192,8 @@ func TestUserMongoDBRepository_CreateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
+				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
 			},
 		},
 		{
@@ -201,8 +201,8 @@ func TestUserMongoDBRepository_CreateUser(t *testing.T) {
 			user: localUsers[0],
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeServerError,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
+				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
 			},
 		},
 	}
@@ -271,8 +271,8 @@ func TestUserMongoDBRepository_GetUserByID(t *testing.T) {
 			expectedUser: nil,
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
+				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
 			},
 		},
 		{
@@ -281,8 +281,8 @@ func TestUserMongoDBRepository_GetUserByID(t *testing.T) {
 			expectedUser: nil,
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
+				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
 			},
 		},
 	}
@@ -345,8 +345,8 @@ func TestUserMongoDBRepository_UpdateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
+				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
 			},
 		},
 		{
@@ -357,8 +357,8 @@ func TestUserMongoDBRepository_UpdateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
+				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
 			},
 		},
 	}
@@ -412,8 +412,8 @@ func TestUserMongoDBRepository_DeleteUser(t *testing.T) {
 			userID: "aaaaaaaaaaaaaaaaaaaaaaaa",
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
+				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
 			},
 		},
 		{
@@ -421,8 +421,8 @@ func TestUserMongoDBRepository_DeleteUser(t *testing.T) {
 			userID: "invalid-id",
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
+				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
 			},
 		},
 	}
