@@ -13,8 +13,8 @@ import (
 	"github.com/STLeee/mediation-platform/backend/core/model"
 )
 
-var LocalMongoDBRepositoryConfigs = MongoDBRepositoryConfigs{
-	RepositoryNameUserDB: {
+var LocalRepositoryConfigs = &RepositoryConfigs{
+	UserDB: &MongoDBRepositoryConfig{
 		Database:   "mediation-platform",
 		Collection: "user",
 	},
@@ -76,7 +76,9 @@ const (
 )
 
 // MongoDBRepositoryConfigs struct for MongoDB repository configs
-type MongoDBRepositoryConfigs map[RepositoryName]*MongoDBRepositoryConfig
+type RepositoryConfigs struct {
+	UserDB *MongoDBRepositoryConfig `yaml:"user_db"`
+}
 
 // MongoDBRepositoryConfig struct for MongoDB repository config
 type MongoDBRepositoryConfig struct {

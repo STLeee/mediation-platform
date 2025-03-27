@@ -104,7 +104,7 @@ func initMongoDBRepositories(mongoDB *coreDB.MongoDB, cfg *config.Config) map[co
 	repositories := make(map[coreRepository.RepositoryName]any)
 
 	// Init user repository
-	userDBRepo := coreRepository.NewUserMongoDBRepository(mongoDB, cfg.Repositories[coreRepository.RepositoryNameUserDB])
+	userDBRepo := coreRepository.NewUserMongoDBRepository(mongoDB, cfg.Repositories.UserDB)
 	repositories[coreRepository.RepositoryNameUserDB] = userDBRepo
 
 	return repositories

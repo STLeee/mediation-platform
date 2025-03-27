@@ -25,11 +25,11 @@ type ServiceConfig struct {
 }
 
 type Config struct {
-	Server       ServerConfig                            `yaml:"server"`
-	Service      ServiceConfig                           `yaml:"service"`
-	AuthService  coreAuth.AuthServiceConfig              `yaml:"auth_service"`
-	MongoDB      coreDB.MongoDBConfig                    `yaml:"mongodb"`
-	Repositories coreRepository.MongoDBRepositoryConfigs `yaml:"repositories"`
+	Server       ServerConfig                     `yaml:"server"`
+	Service      ServiceConfig                    `yaml:"service"`
+	AuthService  coreAuth.AuthServiceConfig       `yaml:"auth_service"`
+	MongoDB      coreDB.MongoDBConfig             `yaml:"mongodb"`
+	Repositories coreRepository.RepositoryConfigs `yaml:"repositories"`
 }
 
 var cfg *Config

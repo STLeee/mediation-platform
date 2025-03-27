@@ -86,7 +86,7 @@ func TestMain(m *testing.M) {
 	}
 	defer mongoDB.Close()
 
-	userMongoDBRepository = NewUserMongoDBRepository(mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUserDB])
+	userMongoDBRepository = NewUserMongoDBRepository(mongoDB, LocalRepositoryConfigs.UserDB)
 
 	// Run tests
 	os.Exit(m.Run())
@@ -192,8 +192,8 @@ func TestUserMongoDBRepository_CreateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 		{
@@ -201,8 +201,8 @@ func TestUserMongoDBRepository_CreateUser(t *testing.T) {
 			user: localUsers[0],
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeServerError,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 	}
@@ -271,8 +271,8 @@ func TestUserMongoDBRepository_GetUserByID(t *testing.T) {
 			expectedUser: nil,
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 		{
@@ -281,8 +281,8 @@ func TestUserMongoDBRepository_GetUserByID(t *testing.T) {
 			expectedUser: nil,
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 	}
@@ -345,8 +345,8 @@ func TestUserMongoDBRepository_UpdateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 		{
@@ -357,8 +357,8 @@ func TestUserMongoDBRepository_UpdateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 	}
@@ -412,8 +412,8 @@ func TestUserMongoDBRepository_DeleteUser(t *testing.T) {
 			userID: "aaaaaaaaaaaaaaaaaaaaaaaa",
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 		{
@@ -421,8 +421,8 @@ func TestUserMongoDBRepository_DeleteUser(t *testing.T) {
 			userID: "invalid-id",
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUserDB].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 	}
