@@ -15,15 +15,11 @@ func TokenAuthenticationHandler(authService coreAuth.BaseAuthService, userRepo c
 	return func(c *gin.Context) {
 		// Get token from header
 		token := c.GetHeader("Authorization")
-		if token == "" {
-			responseError := model.HttpStatusCodeError{
-				StatusCode: http.StatusUnauthorized,
-				Message:    "token is required",
-			}
-			c.Error(responseError)
-			c.Abort()
+		if len(token) < 8 || token[:7] != "Bearer " {
+			c.Next()
 			return
 		}
+		token = token[7:]
 
 		// Authenticate user by token
 		authUID, err := authService.AuthenticateByToken(c, token)

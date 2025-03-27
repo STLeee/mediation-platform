@@ -57,7 +57,7 @@ func TestUserAPIAuthorizationHandler(t *testing.T) {
 			name:       "no-user",
 			tokenUser:  nil,
 			queryPath:  "/test-user-id",
-			statusCode: http.StatusInternalServerError,
+			statusCode: http.StatusUnauthorized,
 			isErr:      true,
 		},
 	}

@@ -189,17 +189,21 @@ func TestTokenAuthenticationHandler(t *testing.T) {
 
 			httpRecorder := utils.RegisterAndRecordHttpRequest(func(routeGroup *gin.RouterGroup) {
 				routeGroup.Use(func(ctx *gin.Context) {
-					ctx.Request.Header.Set("Authorization", testCase.token)
+					ctx.Request.Header.Set("Authorization", "Bearer "+testCase.token)
 					ctx.Next()
 				})
 				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(mockFirebaseAuthService, mockUserRepo))
 				routeGroup.Handle("GET", "/test", func(c *gin.Context) {
-					c.JSON(200, c.MustGet("user"))
+					if testCase.token == "" {
+						c.JSON(http.StatusUnauthorized, nil)
+						return
+					}
+					c.JSON(http.StatusOK, c.MustGet("user"))
 				})
 			}, "GET", "/test", nil)
 
 			assert.Equal(t, testCase.expectedStatusCode, httpRecorder.Code)
-			if httpRecorder.Code == 200 {
+			if httpRecorder.Code == http.StatusOK {
 				assert.Equal(t, utils.ConvertToJSONString(testCase.dbUser), httpRecorder.Body.String())
 			}
 		})

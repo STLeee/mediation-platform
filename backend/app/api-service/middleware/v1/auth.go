@@ -19,8 +19,7 @@ func UserAPIAuthorizationHandler() gin.HandlerFunc {
 		}
 		if user == nil {
 			c.Error(model.HttpStatusCodeError{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "User not found in context",
+				StatusCode: http.StatusUnauthorized,
 			})
 			c.Abort()
 			return
