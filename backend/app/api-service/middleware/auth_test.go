@@ -192,7 +192,7 @@ func TestTokenAuthenticationHandler(t *testing.T) {
 					ctx.Request.Header.Set("Authorization", "Bearer "+testCase.token)
 					ctx.Next()
 				})
-				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(mockFirebaseAuthService, mockUserDBRepo))
+				routeGroup.Use(ErrorHandler(), TokenAuthenticationHandler(mockFirebaseAuthService, mockUserDBRepo, nil))
 				routeGroup.Handle("GET", "/test", func(c *gin.Context) {
 					if testCase.token == "" {
 						c.JSON(http.StatusUnauthorized, nil)

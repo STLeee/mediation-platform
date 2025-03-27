@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
+	coreCache "github.com/STLeee/mediation-platform/backend/core/cache"
 	coreDB "github.com/STLeee/mediation-platform/backend/core/db"
 	coreRepository "github.com/STLeee/mediation-platform/backend/core/repository"
 	coreService "github.com/STLeee/mediation-platform/backend/core/service"
@@ -29,6 +30,7 @@ type Config struct {
 	Service      ServiceConfig                    `yaml:"service"`
 	AuthService  coreAuth.AuthServiceConfig       `yaml:"auth_service"`
 	MongoDB      coreDB.MongoDBConfig             `yaml:"mongodb"`
+	RedisCache   coreCache.RedisCacheConfig       `yaml:"redis"`
 	Repositories coreRepository.RepositoryConfigs `yaml:"repositories"`
 }
 

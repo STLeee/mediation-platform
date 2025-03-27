@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,8 +23,7 @@ func ErrorHandler() gin.HandlerFunc {
 				}
 			}
 
-			// Print error message
-			log.Printf("Error (%d): %s\n", httpStatusCodeError.StatusCode, httpStatusCodeError.Error())
+			// TODO: record error
 
 			// Send response
 			response := model.MessageResponse{
