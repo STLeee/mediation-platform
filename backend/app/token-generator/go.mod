@@ -1,4 +1,4 @@
-module github.com/STLeee/mediation-platform/backend/app/token-creator
+module github.com/STLeee/mediation-platform/backend/app/token-generator
 
 go 1.24.1
 

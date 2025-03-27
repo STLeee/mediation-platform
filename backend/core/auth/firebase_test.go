@@ -64,7 +64,7 @@ func TestFirebase_AuthenticateByToken(t *testing.T) {
 		{
 			name:        "valid-token",
 			uid:         localUsers[0].FirebaseUID,
-			token:       utils.CreateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, localUsers[0].FirebaseUID),
+			token:       utils.GenerateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, localUsers[0].FirebaseUID),
 			expectedErr: nil,
 		},
 		{
@@ -76,7 +76,7 @@ func TestFirebase_AuthenticateByToken(t *testing.T) {
 		{
 			name:        "user-not-found",
 			uid:         "not-found",
-			token:       utils.CreateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, "not-found"),
+			token:       utils.GenerateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, "not-found"),
 			expectedErr: AuthServiceError{ErrType: AuthServiceErrorTypeUserNotFound},
 		},
 	}

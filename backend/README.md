@@ -5,7 +5,7 @@
   - [Local Deployment](#local-deployment)
     - [Run Backend API Service](#run-backend-api-service)
     - [API Document](#api-document)
-    - [Create Token for Local Testing](#create-token-for-local-testing)
+    - [Generate Token for Local Testing](#generate-token-for-local-testing)
     - [Issues](#issues)
       - [permissions on /data/tls/mongodb-test-keyfile are too open](#permissions-on-datatlsmongodb-test-keyfile-are-too-open)
   - [Testing](#testing)
@@ -32,12 +32,12 @@ make run-app # default app: api-service
 
 - http://127.0.0.1:8080/swagger/index.html
 
-### Create Token for Local Testing
+### Generate Token for Local Testing
 
 ```bash
-make create-token # default TestingUser1
+make generate-token # default TestingUser1
 # or
-make create-token UID=${FIREBASE_UID}
+make generate-token UID=${FIREBASE_UID}
 ```
 
 `FIREBASE_UID`: Please refer to [firebase account data](./firebase/emulator_data/auth_export/accounts.json)
