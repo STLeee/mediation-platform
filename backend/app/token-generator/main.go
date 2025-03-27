@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// Print token
-	log.Print(token)
+	log.Print("Bearer " + token)
 }
 
 // Load config

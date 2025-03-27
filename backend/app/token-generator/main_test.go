@@ -88,8 +88,9 @@ func TestApp(t *testing.T) {
 
 			// Success case
 			main()
-			token := buf.String()
-			t.Log(token)
+			tokenWithBearer := buf.String()
+			assert.Contains(t, tokenWithBearer, "Bearer ")
+			token := tokenWithBearer[7:]
 			assert.NotEmpty(t, token)
 
 			// Decode token
@@ -98,7 +99,6 @@ func TestApp(t *testing.T) {
 				t.Fatal(err)
 			}
 			assert.Equal(t, testCase.uid, decodedToken["uid"])
-			t.Log(decodedToken)
 		})
 	}
 }
