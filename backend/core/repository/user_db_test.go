@@ -2,95 +2,12 @@ package repository
 
 import (
 	"context"
-	"os"
-	"slices"
 	"testing"
-	"time"
 
 	"github.com/STLeee/mediation-platform/backend/core/auth"
-	"github.com/STLeee/mediation-platform/backend/core/db"
 	"github.com/STLeee/mediation-platform/backend/core/model"
-	"github.com/STLeee/mediation-platform/backend/core/utils"
 	"github.com/stretchr/testify/assert"
 )
-
-var userMongoDBRepository *UserMongoDBRepository
-
-var localUsers = []*model.User{
-	{
-		UserID:      "000000000000000000000001",
-		FirebaseUID: "LRgwDJoRP7BCYJBNmNrNL4rxhvgR",
-		DisplayName: "TestingUser1",
-		Email:       "testing1@mediation-platform.com",
-		PhoneNumber: "",
-		PhotoURL:    "",
-		Disabled:    false,
-	},
-	{
-		UserID:      "000000000000000000000002",
-		FirebaseUID: "W6WyRvhWhEarGHs7GV5unjVi8DYX",
-		DisplayName: "TestingUser2",
-		Email:       "testing2@mediation-platform.com",
-		PhoneNumber: "",
-		PhotoURL:    "",
-		Disabled:    false,
-	},
-	{
-		UserID:      "000000000000000000000003",
-		FirebaseUID: "3fKQ3DyZhddm2H30J8ggTpsR35x2",
-		DisplayName: "TestingUser3",
-		Email:       "testing3@mediation-platform.com",
-		PhoneNumber: "",
-		PhotoURL:    "",
-		Disabled:    true,
-	},
-}
-
-func assertUserWithMap(t *testing.T, expectedMap map[string]any, actualUser *model.User) {
-	timestampFields := []string{"CreatedAt", "UpdatedAt", "LastLoginAt"}
-	actualMap, err := utils.ConvertStructToMap(actualUser)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for field, value := range expectedMap {
-		if slices.Contains(timestampFields, field) {
-			assert.True(t, utils.SimplyValidTimestamp(actualMap[field].(time.Time)))
-		} else {
-			assert.Equal(t, value, actualMap[field])
-		}
-	}
-}
-
-func assertUser(t *testing.T, expectedUser, actualUser *model.User) {
-	expectedMap, err := utils.ConvertStructToMap(expectedUser)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertUserWithMap(t, expectedMap, actualUser)
-}
-
-func assertError(t *testing.T, expectedErr, actualErr error) {
-	assert.ErrorAs(t, actualErr, &expectedErr)
-	if _, ok := actualErr.(RepositoryError); ok {
-		assert.Equal(t, expectedErr.(RepositoryError).ErrType, actualErr.(RepositoryError).ErrType)
-		assert.Equal(t, expectedErr.(RepositoryError).Database, actualErr.(RepositoryError).Database)
-		assert.Equal(t, expectedErr.(RepositoryError).Collection, actualErr.(RepositoryError).Collection)
-	}
-}
-
-func TestMain(m *testing.M) {
-	// Connect to local MongoDB
-	mongoDB, err := db.NewMongoDB(context.Background(), db.LocalMongoDBConfig)
-	if err != nil {
-		panic(err)
-	}
-	defer mongoDB.Close()
-
-	userMongoDBRepository = NewUserMongoDBRepository(mongoDB, LocalRepositoryConfigs.UserDB)
-
-	// Run tests
-	os.Exit(m.Run())
-}
 
 func TestGetUserByAuthUID(t *testing.T) {
 	ctx := context.Background()
