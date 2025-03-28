@@ -429,8 +429,6 @@ func TestTokenAuthenticationHandler(t *testing.T) {
 					assert.Equal(t, coreAuth.AuthServiceNameFirebase, authName)
 					assert.Equal(t, testCase.token, token)
 					user, err := parseErrorUser(user)
-					t.Log(user)
-					t.Log(err)
 					if testCase.expectedStatusCode == http.StatusOK {
 						assert.Nil(t, err)
 						assert.Equal(t, testCase.dbUser, user)

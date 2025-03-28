@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -127,6 +128,7 @@ func TokenAuthenticationHandler(authService coreAuth.BaseAuthService, userDBRepo
 					user = nil
 				} else {
 					// TODO: record error
+					log.Printf("failed to get user from cache: %v", cacheErr)
 				}
 			} else {
 				var err error
@@ -150,6 +152,7 @@ func TokenAuthenticationHandler(authService coreAuth.BaseAuthService, userDBRepo
 						errUser := newErrorUser(httpStatusCodeError)
 						if cacheErr := userCacheRepo.SetAuthTokenUser(c, authService.GetName(), token, errUser); cacheErr != nil {
 							// TODO: record error
+							log.Printf("failed to set error user to cache: %v", cacheErr)
 						}
 					}
 				}
@@ -163,6 +166,7 @@ func TokenAuthenticationHandler(authService coreAuth.BaseAuthService, userDBRepo
 				err = userCacheRepo.SetAuthTokenUser(c, authService.GetName(), token, user)
 				if err != nil {
 					// TODO: record error
+					log.Printf("failed to set user to cache: %v", err)
 				}
 			}
 		}
