@@ -24,7 +24,7 @@ test-core-report:
 test:
 	$(MAKE) test-core
 	$(MAKE) test-app
-	$(MAKE) test-app APP_NAME=token-creator
+	$(MAKE) test-app APP_NAME=token-generator
 
-create-token:
-	$(MAKE) -C app/token-creator run
+generate-token:
+	$(MAKE) -C app/token-generator run

@@ -11,10 +11,12 @@ func TestNewAndCloseMongoDB(t *testing.T) {
 	// Init database
 	mongodb, err := NewMongoDB(context.Background(), LocalMongoDBConfig)
 	assert.Nil(t, err)
-	collection := mongodb.GetCollection("test-db", "test-collection")
-	assert.NotNil(t, collection)
+	defer mongodb.Close()
 
-	defer mongodb.Close(context.Background())
+	database := mongodb.Database("test-db")
+	assert.NotNil(t, database)
+	collection := database.Collection("test-collection")
+	assert.NotNil(t, collection)
 }
 
 func TestNewMongoDBError(t *testing.T) {

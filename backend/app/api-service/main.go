@@ -14,6 +14,7 @@ import (
 	"github.com/STLeee/mediation-platform/backend/app/api-service/middleware"
 	"github.com/STLeee/mediation-platform/backend/app/api-service/router"
 	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
+	coreCache "github.com/STLeee/mediation-platform/backend/core/cache"
 	coreDB "github.com/STLeee/mediation-platform/backend/core/db"
 	coreRepository "github.com/STLeee/mediation-platform/backend/core/repository"
 	coreService "github.com/STLeee/mediation-platform/backend/core/service"
@@ -47,12 +48,18 @@ func main() {
 		panic(fmt.Sprintf("Failed to init MongoDB: %v", err))
 	}
 
+	// Init cache
+	redisCache, err := initRedisCache(cfg)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to init Redis cache: %v", err))
+	}
+
 	// Init repositories
-	repositories := initMongoDBRepositories(authService, mongoDB, cfg)
+	repositories := initRepositories(mongoDB, redisCache, cfg)
 
 	// Setup server
 	engine := gin.Default()
-	registerAPIRouters(engine, repositories)
+	registerAPIRouters(engine, authService, repositories)
 
 	// Swagger
 	if cfg.Service.Environment == coreService.Testing {
@@ -99,20 +106,35 @@ func initMongoDB(cfg *config.Config) (*coreDB.MongoDB, error) {
 	return mongoDB, nil
 }
 
-// Init MongoDB repositories
-func initMongoDBRepositories(authService coreAuth.BaseAuthService, mongoDB *coreDB.MongoDB, cfg *config.Config) map[coreRepository.RepositoryName]any {
+// Init Redis cache
+func initRedisCache(cfg *config.Config) (*coreCache.RedisCache, error) {
+	redisCache, err := coreCache.NewRedisCache(context.Background(), &cfg.RedisCache)
+	if err != nil {
+		return nil, err
+	}
+
+	return redisCache, nil
+}
+
+// Init repositories
+func initRepositories(mongoDB *coreDB.MongoDB, redisCache *coreCache.RedisCache, cfg *config.Config) map[coreRepository.RepositoryName]any {
 	repositories := make(map[coreRepository.RepositoryName]any)
 
-	// Init user repository
-	userRepo := coreRepository.NewUserMongoDBRepository(authService, mongoDB, cfg.Repositories[coreRepository.RepositoryNameUser])
-	repositories[coreRepository.RepositoryNameUser] = userRepo
+	// Init user db repository
+	userDBRepo := coreRepository.NewUserMongoDBRepository(mongoDB, cfg.Repositories.UserDB)
+	repositories[coreRepository.RepositoryNameUserDB] = userDBRepo
+
+	// Init user cache repository
+	userCacheRepo := coreRepository.NewUserRedisCacheRepository(redisCache, cfg.Repositories.UserCache)
+	repositories[coreRepository.RepositoryNameUserCache] = userCacheRepo
 
 	return repositories
 }
 
 // Register API routers
-func registerAPIRouters(engine *gin.Engine, repositories map[coreRepository.RepositoryName]any) {
-	userRepo, _ := repositories[coreRepository.RepositoryNameUser].(*coreRepository.UserMongoDBRepository)
+func registerAPIRouters(engine *gin.Engine, authService coreAuth.BaseAuthService, repositories map[coreRepository.RepositoryName]any) {
+	userDBRepo, _ := repositories[coreRepository.RepositoryNameUserDB].(coreRepository.UserDBRepository)
+	userCacheRepo, _ := repositories[coreRepository.RepositoryNameUserCache].(coreRepository.UserCacheRepository)
 
 	// Register middleware
 	engine.Use(middleware.CorsHandler())
@@ -127,7 +149,7 @@ func registerAPIRouters(engine *gin.Engine, repositories map[coreRepository.Repo
 
 	// Register v1 router
 	v1RouterGroup := apiRouterGroup.Group("/v1")
-	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(userRepo))
+	v1RouterGroup.Use(middleware.TokenAuthenticationHandler(authService, userDBRepo, userCacheRepo))
 
 	// Register v1 user router
 	userRouterGroup := v1RouterGroup.Group("/user")

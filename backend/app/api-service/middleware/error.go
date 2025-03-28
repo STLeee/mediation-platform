@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 
@@ -18,13 +18,12 @@ func ErrorHandler() gin.HandlerFunc {
 			httpStatusCodeError, ok := err.Err.(model.HttpStatusCodeError)
 			if !ok {
 				httpStatusCodeError = model.HttpStatusCodeError{
-					StatusCode: 500,
+					StatusCode: http.StatusInternalServerError,
 					Err:        err.Err,
 				}
 			}
 
-			// Print error message
-			fmt.Printf("Error (%d): %s\n", httpStatusCodeError.StatusCode, httpStatusCodeError.Error())
+			// TODO: record error
 
 			// Send response
 			response := model.MessageResponse{

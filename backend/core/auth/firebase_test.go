@@ -50,7 +50,11 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestFirebaseAuthenticateByToken(t *testing.T) {
+func TestFirebase_GetName(t *testing.T) {
+	assert.Equal(t, AuthServiceNameFirebase, firebaseAuth.GetName())
+}
+
+func TestFirebase_AuthenticateByToken(t *testing.T) {
 	testCases := []struct {
 		name        string
 		uid         string
@@ -60,7 +64,7 @@ func TestFirebaseAuthenticateByToken(t *testing.T) {
 		{
 			name:        "valid-token",
 			uid:         localUsers[0].FirebaseUID,
-			token:       utils.CreateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, localUsers[0].FirebaseUID),
+			token:       utils.GenerateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, localUsers[0].FirebaseUID),
 			expectedErr: nil,
 		},
 		{
@@ -72,7 +76,7 @@ func TestFirebaseAuthenticateByToken(t *testing.T) {
 		{
 			name:        "user-not-found",
 			uid:         "not-found",
-			token:       utils.CreateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, "not-found"),
+			token:       utils.GenerateMockFirebaseIDToken(firebaseAuth.cfg.ProjectID, "not-found"),
 			expectedErr: AuthServiceError{ErrType: AuthServiceErrorTypeUserNotFound},
 		},
 	}
@@ -96,7 +100,7 @@ func TestFirebaseAuthenticateByToken(t *testing.T) {
 	}
 }
 
-func TestGetUserInfoAndMapping(t *testing.T) {
+func TestFirebase_GetUserInfo(t *testing.T) {
 	testCases := []struct {
 		name string
 		uid  string
@@ -129,10 +133,9 @@ func TestGetUserInfoAndMapping(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			userInfo, mapping, err := firebaseAuth.GetUserInfoAndMapping(context.Background(), testCase.uid)
+			userInfo, err := firebaseAuth.GetUserInfo(context.Background(), testCase.uid)
 			if testCase.want != nil {
 				assert.Equal(t, *testCase.want, *userInfo)
-				assert.Equal(t, testCase.want.FirebaseUID, mapping["firebase_uid"])
 			} else {
 				assert.Nil(t, userInfo)
 			}

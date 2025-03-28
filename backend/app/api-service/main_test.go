@@ -134,7 +134,7 @@ func TestInitMongoDB(t *testing.T) {
 
 func TestRegisterRouters(t *testing.T) {
 	utils.TestEngineRouterRegister(t, func(engine *gin.Engine) {
-		registerAPIRouters(engine, nil)
+		registerAPIRouters(engine, nil, nil)
 	}, []string{
 		"/api/health/liveness",
 		"/api/health/readiness",

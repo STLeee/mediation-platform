@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/STLeee/mediation-platform/backend/core/utils"
@@ -54,14 +53,12 @@ type MongoDBTLSConfig struct {
 
 // MongoDB is a MongoDB client
 type MongoDB struct {
-	client *mongo.Client
-	cfg    *MongoDBConfig
+	mongo.Client
+	cfg *MongoDBConfig
 }
 
 // NewMongoDB creates a new MongoDB
 func NewMongoDB(ctx context.Context, cfg *MongoDBConfig) (*MongoDB, error) {
-	fmt.Printf("MongoDBConfig: %+v\n", cfg)
-
 	// Set client options
 	opt := options.Client().ApplyURI(cfg.URI)
 	if cfg.TLS {
@@ -113,7 +110,7 @@ func NewMongoDB(ctx context.Context, cfg *MongoDBConfig) (*MongoDB, error) {
 	}
 
 	mongoDB := &MongoDB{
-		client: client,
+		Client: *client,
 		cfg:    cfg,
 	}
 
@@ -121,7 +118,7 @@ func NewMongoDB(ctx context.Context, cfg *MongoDBConfig) (*MongoDB, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, cfg.ConnectionTimeout)
 	defer cancel()
 	if err := client.Ping(timeoutCtx, nil); err != nil {
-		mongoDB.Close(ctx)
+		mongoDB.Close()
 		return nil, DBError{
 			ErrType: DBErrorTypeServerError,
 			Message: "failed to ping MongoDB",
@@ -133,13 +130,9 @@ func NewMongoDB(ctx context.Context, cfg *MongoDBConfig) (*MongoDB, error) {
 }
 
 // Close closes the MongoDB client
-func (db *MongoDB) Close(ctx context.Context) {
+func (db *MongoDB) Close() {
+	ctx := context.Background()
 	timeoutCtx, cancel := context.WithTimeout(ctx, db.cfg.ConnectionTimeout)
 	defer cancel()
-	db.client.Disconnect(timeoutCtx)
-}
-
-// GetCollection returns a collection
-func (db *MongoDB) GetCollection(database, collection string) *mongo.Collection {
-	return db.client.Database(database).Collection(collection)
+	db.Disconnect(timeoutCtx)
 }

@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,11 +28,8 @@ func NewUserController() *UserController {
 func (hc *UserController) GetUser(c *gin.Context) {
 	user := c.MustGet("user").(*coreModel.User)
 	userID := c.Param("user_id")
-	fmt.Printf("user: %v\n", user)
-	fmt.Printf("userID: %v\n", userID)
 
 	if userID != user.UserID {
-		fmt.Printf("User ID does not match\n")
 		c.Error(model.HttpStatusCodeError{
 			StatusCode: http.StatusForbidden,
 			Message:    "User ID does not match",

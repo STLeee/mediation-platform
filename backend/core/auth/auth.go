@@ -7,6 +7,12 @@ import (
 	"github.com/STLeee/mediation-platform/backend/core/model"
 )
 
+type AuthServiceName string
+
+const (
+	AuthServiceNameFirebase AuthServiceName = "firebase"
+)
+
 // AuthServiceConfig struct for authentication service configuration
 type AuthServiceConfig struct {
 	FirebaseAuthConfig *FirebaseAuthConfig `yaml:"firebase"`
@@ -54,8 +60,9 @@ func (e AuthServiceError) Unwrap() error {
 
 // BaseAuthService interface for authentication service
 type BaseAuthService interface {
+	GetName() AuthServiceName
 	AuthenticateByToken(ctx context.Context, token string) (uid string, err error)
-	GetUserInfoAndMapping(ctx context.Context, uid string) (user *model.User, mapping map[string]any, err error)
+	GetUserInfo(ctx context.Context, uid string) (user *model.User, err error)
 }
 
 // NewAuthService creates a new authentication service

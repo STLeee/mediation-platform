@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/STLeee/mediation-platform/backend/app/token-creator/config"
+	"github.com/STLeee/mediation-platform/backend/app/token-generator/config"
 	coreAuth "github.com/STLeee/mediation-platform/backend/core/auth"
 	"github.com/STLeee/mediation-platform/backend/core/utils"
 )
@@ -88,8 +88,9 @@ func TestApp(t *testing.T) {
 
 			// Success case
 			main()
-			token := buf.String()
-			t.Log(token)
+			tokenWithBearer := buf.String()
+			assert.Contains(t, tokenWithBearer, "Bearer ")
+			token := tokenWithBearer[7:]
 			assert.NotEmpty(t, token)
 
 			// Decode token
@@ -98,7 +99,6 @@ func TestApp(t *testing.T) {
 				t.Fatal(err)
 			}
 			assert.Equal(t, testCase.uid, decodedToken["uid"])
-			t.Log(decodedToken)
 		})
 	}
 }
@@ -127,7 +127,7 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 	assert.Nil(t, loadedCfg)
 }
 
-func TestCreateToken(t *testing.T) {
+func TestGenerateToken(t *testing.T) {
 	testCases := []struct {
 		name    string
 		uid     string
@@ -155,7 +155,7 @@ func TestCreateToken(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			token, err := createToken(testCase.uid, testCase.config)
+			token, err := generateToken(testCase.uid, testCase.config)
 			if !testCase.isError {
 				assert.NoError(t, err)
 				assert.NotEmpty(t, token)

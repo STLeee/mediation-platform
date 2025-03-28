@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/STLeee/mediation-platform/backend/app/token-creator/config"
+	"github.com/STLeee/mediation-platform/backend/app/token-generator/config"
 	"github.com/STLeee/mediation-platform/backend/core/utils"
 )
 
@@ -30,13 +30,13 @@ func main() {
 	}
 
 	// Create token
-	token, err := createToken(*uid, cfg)
+	token, err := generateToken(*uid, cfg)
 	if err != nil {
 		log.Fatalf("Failed to create token: %v", err)
 	}
 
 	// Print token
-	log.Print(token)
+	log.Print("Bearer " + token)
 }
 
 // Load config
@@ -50,9 +50,9 @@ func loadConfig(path string) (*config.Config, error) {
 }
 
 // Create token
-func createToken(uid string, cfg *config.Config) (string, error) {
+func generateToken(uid string, cfg *config.Config) (string, error) {
 	if cfg.AuthService.FirebaseAuthConfig != nil {
-		return utils.CreateMockFirebaseIDToken(cfg.AuthService.FirebaseAuthConfig.ProjectID, uid), nil
+		return utils.GenerateMockFirebaseIDToken(cfg.AuthService.FirebaseAuthConfig.ProjectID, uid), nil
 	}
 	return "", fmt.Errorf("auth config is not set or not supported")
 }

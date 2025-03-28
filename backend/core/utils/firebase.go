@@ -7,8 +7,8 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-// CreateMockFirebaseIDToken creates a mock Firebase ID token for testing
-func CreateMockFirebaseIDToken(projectID, uid string) string {
+// GenerateMockFirebaseIDToken generates a mock Firebase ID token for testing
+func GenerateMockFirebaseIDToken(projectID, uid string) string {
 	// Define the token claims
 	now := time.Now().Unix()
 	exp := now + 60

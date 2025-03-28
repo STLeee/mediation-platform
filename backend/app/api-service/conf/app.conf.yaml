@@ -22,6 +22,6 @@ mongodb:
     key_file: ../../mongodb/tls/mongodb-test-client.key
 
 repositories:
-  user:
+  user_db:
     database: mediation-platform
     collection: user

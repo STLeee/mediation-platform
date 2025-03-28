@@ -2,150 +2,50 @@ package repository
 
 import (
 	"context"
-	"os"
-	"slices"
 	"testing"
-	"time"
 
 	"github.com/STLeee/mediation-platform/backend/core/auth"
-	"github.com/STLeee/mediation-platform/backend/core/db"
 	"github.com/STLeee/mediation-platform/backend/core/model"
-	"github.com/STLeee/mediation-platform/backend/core/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-var userMongoDBRepository *UserMongoDBRepository
-
-var localUsers = []*model.User{
-	{
-		UserID:      "000000000000000000000001",
-		FirebaseUID: "LRgwDJoRP7BCYJBNmNrNL4rxhvgR",
-		DisplayName: "TestingUser1",
-		Email:       "testing1@mediation-platform.com",
-		PhoneNumber: "",
-		PhotoURL:    "",
-		Disabled:    false,
-	},
-	{
-		UserID:      "000000000000000000000002",
-		FirebaseUID: "W6WyRvhWhEarGHs7GV5unjVi8DYX",
-		DisplayName: "TestingUser2",
-		Email:       "testing2@mediation-platform.com",
-		PhoneNumber: "",
-		PhotoURL:    "",
-		Disabled:    false,
-	},
-	{
-		UserID:      "000000000000000000000003",
-		FirebaseUID: "3fKQ3DyZhddm2H30J8ggTpsR35x2",
-		DisplayName: "TestingUser3",
-		Email:       "testing3@mediation-platform.com",
-		PhoneNumber: "",
-		PhotoURL:    "",
-		Disabled:    true,
-	},
-	{
-		// Not in db
-		UserID:      "",
-		FirebaseUID: "kEnwA5bzGJrkEAnO2atgv6Fbbc2X",
-		DisplayName: "TestingUser4",
-		Email:       "testing4@mediation-platform.com",
-		PhoneNumber: "",
-		PhotoURL:    "",
-		Disabled:    false,
-	},
-}
-
-func assertUserWithMap(t *testing.T, expectedMap map[string]any, actualUser *model.User) {
-	timestampFields := []string{"CreatedAt", "UpdatedAt", "LastLoginAt"}
-	actualMap, err := utils.ConvertStructToMap(actualUser)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for field, value := range expectedMap {
-		if slices.Contains(timestampFields, field) {
-			assert.True(t, utils.SimplyValidTimestamp(actualMap[field].(time.Time)))
-		} else {
-			assert.Equal(t, value, actualMap[field])
-		}
-	}
-}
-
-func assertUser(t *testing.T, expectedUser, actualUser *model.User) {
-	expectedMap, err := utils.ConvertStructToMap(expectedUser)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertUserWithMap(t, expectedMap, actualUser)
-}
-
-func assertError(t *testing.T, expectedErr, actualErr error) {
-	assert.ErrorAs(t, actualErr, &expectedErr)
-	if _, ok := actualErr.(RepositoryError); ok {
-		assert.Equal(t, expectedErr.(RepositoryError).ErrType, actualErr.(RepositoryError).ErrType)
-		assert.Equal(t, expectedErr.(RepositoryError).Database, actualErr.(RepositoryError).Database)
-		assert.Equal(t, expectedErr.(RepositoryError).Collection, actualErr.(RepositoryError).Collection)
-	}
-}
-
-func TestMain(m *testing.M) {
-	// Connect to local Firebase
-	var err error
-	firebaseAuth, err := auth.NewFirebaseAuth(context.Background(), auth.LocalFirebaseAuthConfig)
-	if err != nil {
-		panic(err)
-	}
-
-	// Connect to local MongoDB
-	mongoDB, err := db.NewMongoDB(context.Background(), db.LocalMongoDBConfig)
-	if err != nil {
-		panic(err)
-	}
-	defer mongoDB.Close(context.Background())
-
-	userMongoDBRepository = NewUserMongoDBRepository(firebaseAuth, mongoDB, LocalMongoDBRepositoryConfigs[RepositoryNameUser])
-
-	// Run tests
-	os.Exit(m.Run())
-}
-
-func TestGetUserByToken(t *testing.T) {
+func TestGetUserByAuthUID(t *testing.T) {
 	ctx := context.Background()
 
 	// Test cases
 	testCases := []struct {
 		name         string
-		token        string
+		authName     auth.AuthServiceName
+		authUID      string
 		expectedUser *model.User
 		expectedErr  error
 		isNotInDB    bool
 	}{
 		{
+			name:     "unsupported-auth-service",
+			authName: auth.AuthServiceName("unsupported"),
+			authUID:  "unsupported-uid",
+			expectedErr: RepositoryError{
+				ErrType: RepositoryErrorTypeServerError,
+				Message: "unsupported auth service",
+			},
+		},
+		{
 			name:         "user-found",
-			token:        utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, localUsers[0].FirebaseUID),
+			authName:     auth.AuthServiceNameFirebase,
+			authUID:      localUsers[0].FirebaseUID,
 			expectedUser: localUsers[0],
-			expectedErr:  nil,
 		},
 		{
-			name:        "invalid-token",
-			token:       "invalid-token",
-			expectedErr: auth.AuthServiceError{ErrType: auth.AuthServiceErrorTypeTokenInvalid},
-		},
-		{
-			name:        "user-not-found-from-auth",
-			token:       utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, "not-found-auth-uid"),
+			name:        "user-not-found",
+			authName:    auth.AuthServiceNameFirebase,
+			authUID:     "not-found-uid",
 			expectedErr: auth.AuthServiceError{ErrType: auth.AuthServiceErrorTypeUserNotFound},
-		},
-		{
-			name:         "user-not-in-db",
-			token:        utils.CreateMockFirebaseIDToken(auth.LocalFirebaseAuthConfig.ProjectID, localUsers[3].FirebaseUID),
-			expectedUser: localUsers[3],
-			isNotInDB:    true,
 		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			user, err := userMongoDBRepository.GetUserByToken(ctx, testCase.token)
+			user, err := userMongoDBRepository.GetUserByAuthUID(ctx, testCase.authName, testCase.authUID)
 			if testCase.expectedUser != nil {
 				if err != nil {
 					t.Fatal(err)
@@ -167,7 +67,9 @@ func TestGetUserByToken(t *testing.T) {
 			} else {
 				assert.ErrorAs(t, err, &testCase.expectedErr)
 				if _, ok := err.(RepositoryError); ok {
-					assert.Equal(t, testCase.expectedErr.(auth.AuthServiceError).ErrType, err.(RepositoryError).ErrType)
+					assert.Equal(t, testCase.expectedErr.(RepositoryError).ErrType, err.(RepositoryError).ErrType)
+				} else if _, ok := err.(auth.AuthServiceError); ok {
+					assert.Equal(t, testCase.expectedErr.(auth.AuthServiceError).ErrType, err.(auth.AuthServiceError).ErrType)
 				}
 			}
 		})
@@ -207,8 +109,8 @@ func TestUserMongoDBRepository_CreateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 		{
@@ -216,8 +118,8 @@ func TestUserMongoDBRepository_CreateUser(t *testing.T) {
 			user: localUsers[0],
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeServerError,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 	}
@@ -286,8 +188,8 @@ func TestUserMongoDBRepository_GetUserByID(t *testing.T) {
 			expectedUser: nil,
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 		{
@@ -296,8 +198,8 @@ func TestUserMongoDBRepository_GetUserByID(t *testing.T) {
 			expectedUser: nil,
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 	}
@@ -360,8 +262,8 @@ func TestUserMongoDBRepository_UpdateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 		{
@@ -372,8 +274,8 @@ func TestUserMongoDBRepository_UpdateUser(t *testing.T) {
 			},
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 	}
@@ -427,8 +329,8 @@ func TestUserMongoDBRepository_DeleteUser(t *testing.T) {
 			userID: "aaaaaaaaaaaaaaaaaaaaaaaa",
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeRecordNotFound,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 		{
@@ -436,8 +338,8 @@ func TestUserMongoDBRepository_DeleteUser(t *testing.T) {
 			userID: "invalid-id",
 			expectedErr: RepositoryError{
 				ErrType:    RepositoryErrorTypeInvalidID,
-				Database:   LocalMongoDBRepositoryConfigs[RepositoryNameUser].Database,
-				Collection: LocalMongoDBRepositoryConfigs[RepositoryNameUser].Collection,
+				Database:   LocalRepositoryConfigs.UserDB.Database,
+				Collection: LocalRepositoryConfigs.UserDB.Collection,
 			},
 		},
 	}

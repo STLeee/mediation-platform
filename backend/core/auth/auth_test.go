@@ -109,7 +109,6 @@ func TestNewAuthService(t *testing.T) {
 				actual := reflect.TypeOf(authService).Elem().Name()
 				assert.Equal(t, expected, actual)
 			} else {
-				t.Log(err)
 				assert.Equal(t, testCase.expected, err)
 			}
 		})

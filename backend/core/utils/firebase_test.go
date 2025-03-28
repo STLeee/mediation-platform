@@ -9,7 +9,7 @@ import (
 func TestCreateMockFirebaseIDToken(t *testing.T) {
 	projectID := "test-project-id"
 	uid := "test-uid"
-	token := CreateMockFirebaseIDToken(projectID, uid)
+	token := GenerateMockFirebaseIDToken(projectID, uid)
 	assert.NotNil(t, token)
 
 	// Decode the token
