@@ -14,6 +14,14 @@ import (
 )
 
 func authenticateUserByToken(ctx context.Context, authService coreAuth.BaseAuthService, userDBRepo coreRepository.UserDBRepository, token string) (*coreModel.User, error) {
+	// Empty token
+	if token == "" {
+		return nil, model.HttpStatusCodeError{
+			StatusCode: http.StatusUnauthorized,
+			Message:    "empty token",
+		}
+	}
+
 	// Authenticate user by token
 	authUID, err := authService.AuthenticateByToken(ctx, token)
 	if err != nil {
@@ -112,15 +120,16 @@ func TokenAuthenticationHandler(authService coreAuth.BaseAuthService, userDBRepo
 
 		// Get user from cache
 		if userCacheRepo != nil {
-			var err error
-			user, err = userCacheRepo.GetAuthTokenUser(c, authService.GetName(), token)
-			if err != nil {
-				if repositoryError, ok := err.(coreRepository.RepositoryError); ok && repositoryError.ErrType == coreRepository.RepositoryErrorTypeRecordNotFound {
+			var cacheErr error
+			user, cacheErr = userCacheRepo.GetAuthTokenUser(c, authService.GetName(), token)
+			if cacheErr != nil {
+				if repositoryError, ok := cacheErr.(coreRepository.RepositoryError); ok && repositoryError.ErrType == coreRepository.RepositoryErrorTypeRecordNotFound {
 					user = nil
 				} else {
 					// TODO: record error
 				}
 			} else {
+				var err error
 				user, err = parseErrorUser(user)
 				if err != nil {
 					c.Error(err)
@@ -135,22 +144,13 @@ func TokenAuthenticationHandler(authService coreAuth.BaseAuthService, userDBRepo
 			var err error
 			user, err = authenticateUserByToken(c, authService, userDBRepo, token)
 			if err != nil {
-				if httpStatusCodeError, ok := err.(model.HttpStatusCodeError); ok {
-					if httpStatusCodeError.StatusCode != http.StatusInternalServerError {
-						// Set error to cache
-						if userCacheRepo != nil {
-							errUser := newErrorUser(httpStatusCodeError)
-							err = userCacheRepo.SetAuthTokenUser(c, authService.GetName(), token, errUser)
-							if err != nil {
-								// TODO: record error
-							}
+				if httpStatusCodeError, ok := err.(model.HttpStatusCodeError); ok && httpStatusCodeError.StatusCode != http.StatusInternalServerError {
+					// Set error to cache
+					if userCacheRepo != nil {
+						errUser := newErrorUser(httpStatusCodeError)
+						if cacheErr := userCacheRepo.SetAuthTokenUser(c, authService.GetName(), token, errUser); cacheErr != nil {
+							// TODO: record error
 						}
-					}
-				} else {
-					err = model.HttpStatusCodeError{
-						StatusCode: http.StatusInternalServerError,
-						Message:    "failed to authenticate user by token",
-						Err:        err,
 					}
 				}
 				c.Error(err)
